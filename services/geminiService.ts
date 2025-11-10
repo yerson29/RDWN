@@ -1,15 +1,9 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { StyleVariation, Furniture, ImageBase64 } from '../types';
 
-// NOTA IMPORTANTE: Se ha eliminado la verificación explícita `if (!process.env.API_KEY)`
-// siguiendo las directrices de que la clave API debe asumirse como pre-configurada, válida y accesible.
-// En entornos de navegador, `process.env` podría no estar completamente definido de forma nativa,
-// y un intento de acceder o verificarlo podría causar errores de carga de la aplicación.
-
 const MAX_IMAGE_GENERATION_RETRIES = 3;
 const BASE_RETRY_DELAY_MS = 1000; // 1 second
 
-// Se eliminó la instancia global 'ai'. Ahora se creará una nueva instancia por cada llamada a la API.
 const imageModel = 'gemini-2.5-flash-image';
 const textModel = 'gemini-2.5-flash';
 
@@ -46,8 +40,7 @@ export const fileToGenerativePart = (data: string, mimeType: string) => {
 };
 
 export const analyzeImage = async (base64Data: string, mimeType: string): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); // Nueva instancia
-    // FIX: Se inicializa 'imagePart' antes de su uso.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); 
     const imagePart = fileToGenerativePart(base64Data, mimeType);
     try {
         const response = await ai.models.generateContent({
@@ -55,7 +48,7 @@ export const analyzeImage = async (base64Data: string, mimeType: string): Promis
             contents: { parts: [imagePart, { text: "Analiza esta imagen de una habitación. Describe el tipo de habitación (ej. sala de estar, dormitorio) y su estilo actual. Sé conciso y directo." }] },
         });
         if (response.promptFeedback?.blockReason) {
-            throw response; // Throw full response to be handled by handleApiError
+            throw response; 
         }
         return response.text;
     } catch (err) {
@@ -64,7 +57,7 @@ export const analyzeImage = async (base64Data: string, mimeType: string): Promis
 };
 
 const generateStyleDetails = async (base64ImageData: string, mimeType: string, styleName: string): Promise<Omit<StyleVariation, 'imageUrl' | 'imageBase64' | 'iterations'>> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); // Nueva instancia
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); 
     const imagePart = fileToGenerativePart(base64ImageData, mimeType);
     
     try {
@@ -103,7 +96,7 @@ const generateStyleDetails = async (base64ImageData: string, mimeType: string, s
         });
 
         if (response.promptFeedback?.blockReason) {
-            throw response; // Throw full response to be handled by handleApiError
+            throw response; 
         }
 
         const jsonText = response.text.trim();
@@ -129,7 +122,6 @@ const generateStyleDetails = async (base64ImageData: string, mimeType: string, s
             description: parsed.description,
             color_palette: parsed.color_palette,
             furniture_recommendations: parsed.furniture_recommendations,
-// FIX: Added missing 'comments' property to satisfy the return type.
             comments: [],
         };
     } catch (err) {
@@ -138,13 +130,13 @@ const generateStyleDetails = async (base64ImageData: string, mimeType: string, s
 };
 
 export const generateStyledImage = async (base64Data: string, mimeType: string, styleName: string): Promise<ImageBase64> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); // Nueva instancia
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); 
     const prompt = `Rediseña esta habitación en un estilo ${styleName}. Mantén la estructura y disposición de la habitación pero cambia los muebles, colores y decoración para que coincida con el estilo ${styleName}. El resultado debe ser fotorrealista, de alta calidad y claro. No incluyas personas en la imagen.`;
     
     const imagePart = fileToGenerativePart(base64Data, mimeType);
     const textPart = { text: prompt };
 
-    let delay = BASE_RETRY_DELAY_MS; // Starting delay for exponential backoff
+    let delay = BASE_RETRY_DELAY_MS; 
 
     for (let i = 0; i < MAX_IMAGE_GENERATION_RETRIES; i++) {
         try {
@@ -161,7 +153,7 @@ export const generateStyledImage = async (base64Data: string, mimeType: string, 
             }
 
             if (response.promptFeedback?.blockReason) {
-                throw response; // Throw full response to be handled by handleApiError
+                throw response; 
             }
 
             const candidate = response.candidates?.[0];
@@ -172,8 +164,8 @@ export const generateStyledImage = async (base64Data: string, mimeType: string, 
             if (candidate.finishReason === 'NO_IMAGE') {
                 if (i < MAX_IMAGE_GENERATION_RETRIES - 1) {
                     console.warn(`Reintento ${i + 1}/${MAX_IMAGE_GENERATION_RETRIES} para la generación de imagen (NO_IMAGE).`);
-                    await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); // Add jitter
-                    delay *= 2; // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); 
+                    delay *= 2; 
                     continue;
                 } else {
                     throw new Error("Mi universo de sueños no pudo crear la imagen esta vez. Esto puede pasar si la idea es muy compleja o el contenido no es adecuado.");
@@ -191,14 +183,13 @@ export const generateStyledImage = async (base64Data: string, mimeType: string, 
             throw new Error("La respuesta de mi universo de sueños no contenía los datos de la imagen. Esto puede indicar un problema en la generación.");
 
         } catch (error: any) {
-            // Check for API errors that are not just NO_IMAGE and should be propagated immediately
             if (error.message && error.message.startsWith("QUOTA_EXCEEDED:")) {
-                throw error; // Propagate quota error immediately
+                throw error; 
             }
             if (i < MAX_IMAGE_GENERATION_RETRIES - 1) {
                 console.warn(`Reintento ${i + 1}/${MAX_IMAGE_GENERATION_RETRIES} para generación de imagen debido a error: ${error.message}`);
-                await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); // Add jitter
-                delay *= 2; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); 
+                delay *= 2; 
                 continue;
             }
             throw handleApiError(error, `generar imagen estilizada de ${styleName}`);
@@ -223,7 +214,7 @@ export async function* generateInitialDesignsStream(
     base64Data: string, 
     mimeType: string, 
 ): AsyncGenerator<StyleVariation> {
-    const styles = ['Moderno', 'Nórdico', 'Clásico', 'Bohemio', 'Industrial'];
+    const styles = ['Moderno', 'Nórdico', 'Clásico', 'Bohemio', 'Industrial', 'Rústico'];
     
     for (const style of styles) {
         try {
@@ -231,7 +222,6 @@ export async function* generateInitialDesignsStream(
             yield variation;
         } catch (error) {
             console.error(`Falló la generación de la variación para el estilo: ${style}`, error);
-            // Propagate the error so the UI can handle it if needed
             throw handleApiError(error, `generar estilo inicial ${style}`);
         }
     }
@@ -244,12 +234,12 @@ export const refineDesign = async (
     prompt: string,
     styleName: string
 ): Promise<{ newImage: ImageBase64; newDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> }> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); // Nueva instancia
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string }); 
     const imagePart = fileToGenerativePart(base64Data, mimeType);
     const textPart = { text: prompt };
 
     let refinedImage: ImageBase64 | null = null;
-    let delay = BASE_RETRY_DELAY_MS; // Starting delay for exponential backoff
+    let delay = BASE_RETRY_DELAY_MS; 
 
     for (let i = 0; i < MAX_IMAGE_GENERATION_RETRIES; i++) {
         try {
@@ -266,7 +256,7 @@ export const refineDesign = async (
             }
 
             if (response.promptFeedback?.blockReason) {
-                throw response; // Throw full response to be handled by handleApiError
+                throw response; 
             }
 
             const candidate = response.candidates?.[0];
@@ -277,8 +267,8 @@ export const refineDesign = async (
             if (candidate.finishReason === 'NO_IMAGE') {
                 if (i < MAX_IMAGE_GENERATION_RETRIES - 1) {
                     console.warn(`Reintento ${i + 1}/${MAX_IMAGE_GENERATION_RETRIES} para el refinamiento (NO_IMAGE).`);
-                    await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); // Add jitter
-                    delay *= 2; // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); 
+                    delay *= 2; 
                     continue;
                 } else {
                     throw new Error("Mi universo de sueños no pudo generar una imagen para el refinamiento. Intenta con una instrucción diferente o menos compleja.");
@@ -299,14 +289,13 @@ export const refineDesign = async (
             
             throw new Error("La respuesta de mi universo de sueños para el refinamiento no contenía datos de imagen.");
         } catch (error: any) {
-             // Check for API errors that are not just NO_IMAGE and should be propagated immediately
             if (error.message && error.message.startsWith("QUOTA_EXCEEDED:")) {
-                throw error; // Propagate quota error immediately
+                throw error; 
             }
             if (i < MAX_IMAGE_GENERATION_RETRIES - 1) {
                 console.warn(`Reintento ${i + 1}/${MAX_IMAGE_GENERATION_RETRIES} para refinamiento debido a error: ${error.message}`);
-                await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); // Add jitter
-                delay *= 2; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay + Math.random() * 500)); 
+                delay *= 2; 
                 continue;
             }
             throw handleApiError(error, `refinar el diseño del estilo ${styleName}`);
@@ -327,4 +316,67 @@ export const refineDesign = async (
             furniture_recommendations: newDetailsResult.furniture_recommendations,
         },
     };
+};
+
+export const generateStoryParagraph = async (
+    imageBase64: ImageBase64,
+    styleName: string,
+    projectAnalysis: string,
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const imagePart = fileToGenerativePart(imageBase64.data, imageBase64.mimeType);
+
+    const prompt = `Imagina una historia ambientada en esta habitación, diseñada en estilo ${styleName}. Considerando que esta es ${projectAnalysis.toLowerCase()}, describe el ambiente y la escena, y escribe un párrafo inicial a una historia que comience aquí. Sé creativo, sugerente y envolvente. NO añadas títulos, ni nombres de personajes, ni diálogos, solo la descripción del inicio de una historia.`
+    try {
+        const response = await ai.models.generateContent({
+            model: textModel,
+            contents: { parts: [imagePart, { text: prompt }] },
+            config: {
+                temperature: 0.9,
+                topK: 64,
+                topP: 0.95,
+            },
+        });
+        if (response.promptFeedback?.blockReason) {
+            throw response;
+        }
+        return response.text;
+    } catch (err) {
+        throw handleApiError(err, "generar el párrafo de la historia");
+    }
+};
+
+export const regenerateStoryParagraph = async (
+    chatHistory: { role: string; parts: { text: string }[] }[],
+    imageBase64: ImageBase64,
+    styleName: string,
+    projectAnalysis: string,
+): Promise<string> => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const imagePart = fileToGenerativePart(imageBase64.data, imageBase64.mimeType);
+
+    // Contextualize the chat with the image and project details
+    const initialContext = `El usuario quiere generar un párrafo inicial para una historia ambientada en esta habitación. La habitación está diseñada en estilo ${styleName}, y su análisis general es: ${projectAnalysis.toLowerCase()}. Basado en la imagen y el estilo, el modelo debe escribir un párrafo de apertura que analice el ambiente y la escena. NO añadas títulos, ni nombres de personajes, ni diálogos, solo la descripción del inicio de una historia. El usuario ahora está dando feedback para regenerar el párrafo.`;
+
+    // Add the initial context as the first message from the user to prime the chat
+    const fullChatHistory = [
+        { role: 'user', parts: [{ text: initialContext }] },
+        ...chatHistory
+    ];
+    
+    const chat = ai.chats.create({
+      model: textModel, // Asegúrate de que el modelo esté definido aquí
+      history: fullChatHistory,
+    });
+
+    try {
+        // Send the latest message (user's feedback) and get a new response
+        const response = await chat.sendMessage({ parts: [imagePart, { text: fullChatHistory[fullChatHistory.length -1].parts[0].text}] }); 
+        if (response.promptFeedback?.blockReason) {
+            throw response;
+        }
+        return response.text;
+    } catch (err) {
+        throw handleApiError(err, "regenerar el párrafo de la historia");
+    }
 };

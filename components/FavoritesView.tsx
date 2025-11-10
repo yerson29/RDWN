@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { FavoriteDesign } from '../types';
-import { DeleteIcon, ViewIcon, HeartIcon, SearchIcon, StarFilledIcon } from './icons/Icons';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { DeleteIcon, ViewIcon, DreamHeartIcon, SearchIcon } from './icons/Icons';
 import ImageWithFallback from './ImageWithFallback';
 
 interface FavoritesViewProps {
@@ -24,13 +25,13 @@ const FavoritesView: React.FC<FavoritesViewProps> = ({ favorites, onView, onDele
   if (favorites.length === 0) {
     return (
       <div className="text-center py-20 flex flex-col items-center justify-center gap-6">
-        <StarFilledIcon className="w-24 h-24 text-primary-accent mx-auto" />
+        <DreamHeartIcon className="w-24 h-24 text-primary-accent mx-auto" />
         <h2 className="text-5xl font-bold title-gradient main-title text-center">¡Aún no hay joyas en tu cofre! ¡Te invitamos a crearlas.</h2> {/* Centered title */}
         <p className="text-text-color-soft mt-2 text-lg">
             Cuando un diseño te robe el aliento, guárdalo aquí como tu joya más preciada.
         </p>
         <button onClick={onNavigateToUpload} className="px-8 py-4 btn-primary text-lg font-semibold shadow-xl rounded-full flex items-center gap-2">
-            <HeartIcon className="w-6 h-6"/> ¡A crear nuevas joyas para tu espacio!
+            <DreamHeartIcon className="w-6 h-6"/> ¡A crear nuevas joyas para tu espacio!
         </button>
       </div>
     );
@@ -62,6 +63,7 @@ const FavoritesView: React.FC<FavoritesViewProps> = ({ favorites, onView, onDele
                   alt={`Diseño favorito: ${fav.styleVariation.style_name} de ${fav.projectName}`} 
                   className="w-full h-48 object-cover" 
                   fallbackIconClassName="w-1/3 h-1/3"
+                  loading="lazy"
               />
               <div className="p-5">
                 <h3 className="font-bold text-xl truncate text-text-color">{fav.styleVariation.style_name}</h3> {/* Changed text-white to text-text-color */}

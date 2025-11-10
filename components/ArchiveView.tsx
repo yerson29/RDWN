@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Project } from '../types';
-import { DeleteIcon, ViewIcon, SearchIcon } from './icons/Icons';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { DeleteIcon, ViewIcon, SearchIcon, DreamHeartIcon } from './icons/Icons';
 import ImageWithFallback from './ImageWithFallback';
 
 interface ArchiveViewProps {
@@ -52,6 +53,7 @@ const ArchiveView: React.FC<ArchiveViewProps> = ({ projects, onView, onDelete })
                   alt={`Imagen original de tu inspiración: ${project.name}`} 
                   className="w-full h-48 object-cover" 
                   fallbackIconClassName="w-1/3 h-1/3"
+                  loading="lazy"
               />
               <div className="p-5">
                 <h3 className="font-bold text-xl truncate text-text-color">{project.name}</h3> {/* Changed text-white to text-text-color */}
@@ -64,6 +66,7 @@ const ArchiveView: React.FC<ArchiveViewProps> = ({ projects, onView, onDelete })
                             src={variation.imageUrl}
                             alt={variation.style_name}
                             className="w-10 h-10 rounded-md object-cover border-2 border-gray-200" /* Changed border-white to border-gray-200 */
+                            loading="lazy"
                         />
                     ))}
                 </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { ErrorIcon } from './icons/Icons';
 
 interface ConfirmationDialogProps {

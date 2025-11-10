@@ -3,12 +3,34 @@ import { Project, StyleVariation, Furniture, ImageBase64, Comment } from '../typ
 import RefinementPanel from './RefinementPanel';
 import FurnitureList from './FurnitureList';
 import ImageWithFallback from './ImageWithFallback';
-import { HeartIcon, ShareIcon, EditIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, CommentIcon as DiaryIcon } from './icons/Icons';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { DreamHeartIcon, ShareIcon, EditIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, CommentIcon as DiaryIcon, BookOpenIcon, StarDustIcon } from './icons/Icons';
 
 // ALL_STYLES is now imported from types.ts
 import { ALL_STYLES } from '../types';
 
 // --- INLINED COMPONENTS FOR SIMPLICITY ---
+
+// YersonQuoteSection Component
+const YersonQuoteSection: React.FC<{ quote: string; timestamp: string }> = ({ quote, timestamp }) => (
+    <div className="p-4 bg-purple-50/50 rounded-lg border border-purple-100 mb-6 text-center">
+        <h4 className="text-xl font-bold main-title title-gradient mb-2">La Última Frase de Yerson</h4>
+        <p className="text-text-color text-lg italic mb-2">"{quote}"</p>
+        <p className="text-xs text-text-color-soft">{timestamp}</p>
+    </div>
+);
+
+// DesignHoroscope Component
+const DesignHoroscope: React.FC<{ horoscope: string }> = ({ horoscope }) => {
+    const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return (
+        <div className="p-4 bg-pink-50/50 rounded-lg border border-pink-100 mb-6 text-center">
+            <h4 className="text-xl font-bold main-title title-gradient mb-2">Tu Horóscopo de Diseño</h4>
+            <p className="text-text-color text-sm mb-2">Para hoy, {today}, tu universo de sueños te susurra:</p>
+            <p className="text-text-color text-lg font-semibold">"{horoscope}"</p>
+        </div>
+    );
+};
 
 // CommentsSection Component
 const CommentsSection: React.FC<{ comments: Comment[]; onSaveComment: (text: string) => void; }> = ({ comments, onSaveComment }) => {
@@ -30,7 +52,7 @@ const CommentsSection: React.FC<{ comments: Comment[]; onSaveComment: (text: str
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="¿Qué te susurra tu inspiración sobre este diseño?"
-                    className="w-full p-3 border border-secondary-accent/50 rounded-lg bg-white text-text-color mb-3 focus:ring-2 focus:ring-primary-accent transition" // Changed bg-gray-50 to bg-white
+                    className="w-full p-3 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color mb-3 focus:ring-2 focus:ring-primary-accent transition" 
                     rows={3}
                 ></textarea>
                 <button
@@ -45,17 +67,17 @@ const CommentsSection: React.FC<{ comments: Comment[]; onSaveComment: (text: str
             <div className="space-y-4">
                 {comments.length > 0 ? (
                     comments.map(comment => (
-                        <div key={comment.id} className="p-4 bg-white rounded-lg border border-gray-200"> {/* Changed bg-pink-50/50 to bg-white, border-pink-100 to border-gray-200 */}
-                            <p className="text-text-color whitespace-pre-wrap">{comment.text}</p> {/* Changed text-white */}
-                            <p className="text-xs text-text-color-soft mt-2 text-right"> {/* Changed text-white/70 */}
+                        <div key={comment.id} className="p-4 bg-pink-50/50 rounded-lg border border-pink-100">
+                            <p className="text-text-color whitespace-pre-wrap">{comment.text}</p>
+                            <p className="text-xs text-text-color-soft mt-2 text-right">
                                 {new Date(comment.createdAt).toLocaleString()}
                             </p>
                         </div>
                     ))
                 ) : (
-                    <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg"> {/* Changed border-gray-300 */}
+                    <div className="text-center py-8 px-4 border-2 border-dashed border-gray-300 rounded-lg">
                         <DiaryIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-text-color-soft">Aún no has capturado tus pensamientos aquí. Tu diario te espera.</p> {/* Changed text-white/70 */}
+                        <p className="text-text-color-soft">Aún no has capturado tus pensamientos aquí. Tu diario te espera.</p>
                     </div>
                 )}
             </div>
@@ -99,9 +121,9 @@ const ImageComparator: React.FC<{ before: string; after: string }> = ({ before, 
 
     return (
         <div ref={containerRef} className="image-comparator w-full aspect-video select-none rounded-xl">
-            <ImageWithFallback src={after} alt="After" className="object-cover" />
+            <ImageWithFallback src={after} alt="After" className="object-cover" loading="eager" /> {/* Images in comparator are immediately visible */}
             <div className="before-wrapper" style={{ width: `${sliderPos}%` }}>
-                <ImageWithFallback src={before} alt="Before" className="object-cover" />
+                <ImageWithFallback src={before} alt="Before" className="object-cover" loading="eager" /> {/* Images in comparator are immediately visible */}
             </div>
             <div
                 className="slider"
@@ -125,8 +147,21 @@ const ImageComparator: React.FC<{ before: string; after: string }> = ({ before, 
 // Tabs Component
 const Tabs: React.FC<{
     tabs: { label: string; content: React.ReactNode }[];
-}> = ({ tabs }) => {
+    initialActiveTabLabel?: string; // Nuevo: Para establecer la pestaña activa al montar
+}> = ({ tabs, initialActiveTabLabel }) => {
     const [activeTab, setActiveTab] = useState(0);
+
+    // Effect to set initial tab based on prop
+    useEffect(() => {
+        if (initialActiveTabLabel) {
+            const initialIndex = tabs.findIndex(tab => tab.label === initialActiveTabLabel);
+            if (initialIndex !== -1) {
+                setActiveTab(initialIndex);
+            }
+        } else {
+            setActiveTab(0); // Default to first tab if no initial label or not found
+        }
+    }, [initialActiveTabLabel, tabs]);
 
     return (
         <div>
@@ -184,7 +219,7 @@ const ColorPalette: React.FC<{ palette: string[] }> = ({ palette }) => {
                     <div key={index} className="w-12 h-12 rounded-full shadow-md border-2 border-white" style={{ backgroundColor: color }} title={color} role="listitem" aria-label={`Color ${color}`}></div>
                 ))}
             </div>
-            <button onClick={handleCopy} className="mt-4 flex items-center gap-2 text-sm font-semibold text-text-color hover:text-text-color-soft transition-colors" aria-live="polite"> {/* Adjusted text color */}
+            <button onClick={handleCopy} className="mt-4 flex items-center gap-2 text-sm font-semibold text-text-color hover:text-text-color-soft transition-colors" aria-live="polite">
                 <ClipboardIcon className="w-4 h-4" />
                 {copied ? '¡Copiado!' : 'Copiar Paleta'}
             </button>
@@ -202,6 +237,11 @@ interface ProjectViewProps {
   onRevert: (project: Project, styleName: string) => void;
   onSaveProjectName: (newName: string) => void;
   onSaveComment: (projectId: string, styleName: string, text: string) => void;
+  onGenerateStory: (imageBase64: ImageBase64, styleName: string, projectAnalysis: string) => void;
+  initialActiveTabLabel?: string; // Nuevo: Para establecer la pestaña activa al montar
+  yersonQuote: string; // New prop for Yerson's quote
+  yersonQuoteTimestamp: string; // New prop for Yerson's quote timestamp
+  designHoroscope: string; // New prop for design horoscope
 }
 
 
@@ -221,35 +261,37 @@ const StyleCard: React.FC<{ variation: StyleVariation; onSelect: () => void; isS
                 alt={variation.style_name} 
                 className="w-full h-24 sm:h-32 object-cover" 
                 fallbackIconClassName="w-1/2 h-1/2"
+                loading="lazy"
             />
             <div className="p-3">
-                <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{variation.style_name}</h3> {/* Adjusted text-white to text-text-color */}
+                <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{variation.style_name}</h3>
             </div>
         </div>
     );
 };
 
 const StyleCardSkeleton: React.FC<{ styleName: string; originalImage: string }> = ({ styleName, originalImage }) => (
-    <div className="gradient-card rounded-2xl overflow-hidden"> {/* Removed border-white/50 */}
+    <div className="gradient-card rounded-2xl overflow-hidden">
         <div className="relative w-full h-24 sm:h-32">
             <ImageWithFallback
                 src={originalImage}
                 alt="Cargando estilo..."
                 className="w-full h-full object-cover"
                 fallbackIconClassName="w-1/2 h-1/2"
+                loading="lazy"
             />
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                  <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-primary-accent"></div>
             </div>
         </div>
         <div className="p-3">
-            <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{styleName}</h3> {/* Adjusted text-white to text-text-color */}
+            <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{styleName}</h3>
         </div>
     </div>
 );
 
 
-const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, onRefine, onFavorite, onRevert, onSaveProjectName, onSaveComment }) => {
+const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, onRefine, onFavorite, onRevert, onSaveProjectName, onSaveComment, onGenerateStory, initialActiveTabLabel, yersonQuote, yersonQuoteTimestamp, designHoroscope }) => {
     const [selectedStyle, setSelectedStyle] = useState<StyleVariation | null>(null);
     const [currentIterationIndex, setCurrentIterationIndex] = useState(0);
     const [isEditingName, setIsEditingName] = useState(false);
@@ -263,7 +305,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
     
         let styleToSelect: StyleVariation | undefined;
     
-        // Priority 1: A specific style name is passed in props (e.g., from favorites view)
+        // Priority 1: A specific style name is passed in props (e.g., from favorites view or initial project load)
         if (initialStyleName) {
             styleToSelect = project.styleVariations.find(s => s.style_name === initialStyleName);
         }
@@ -377,6 +419,12 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
         }
     };
 
+    const handleGenerateStoryClick = () => {
+        if (selectedStyle?.imageBase64 && selectedStyle.style_name && project.analysis) {
+            onGenerateStory(selectedStyle.imageBase64, selectedStyle.style_name, project.analysis);
+        }
+    };
+
     const displayContent = useMemo(() => {
         if (!selectedStyle) return { imageUrl: project.originalImage, description: '', palette: [], furniture_recommendations: [] };
 
@@ -417,14 +465,18 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
         }
     }, [project.originalImage, selectedStyle, currentIterationIndex]);
 
-    // FIX: Se añade una anotación de tipo explícita al array `tabs` para resolver el error de inferencia de tipo
-    // y se eliminan comentarios en línea que podrían interferir con el parser.
     type TabItem = { label: string; content: React.ReactNode };
     const tabs: TabItem[] = [
         { label: 'Inspiración', content: <p className="text-text-color-soft">{displayContent.description}</p> },
         { label: 'Tesoros', content: displayContent.furniture_recommendations && displayContent.furniture_recommendations.length > 0 ? <FurnitureList furniture={displayContent.furniture_recommendations} /> : <p className="text-text-color-soft">Aún no se han encontrado tesoros para este estilo. ¡Sigue explorando!</p> },
         { label: 'Colores', content: displayContent.palette && displayContent.palette.length > 0 ? <ColorPalette palette={displayContent.palette} /> : <p className="text-text-color-soft">No hay una paleta de colores definida para este estilo.</p> },
-        { label: 'Tu Diario', content: <CommentsSection comments={selectedStyle?.comments || []} onSaveComment={handleSaveCommentInternal} /> },
+        { label: 'Tu Diario', content: (
+            <div>
+                <YersonQuoteSection quote={yersonQuote} timestamp={yersonQuoteTimestamp} />
+                <DesignHoroscope horoscope={designHoroscope} />
+                <CommentsSection comments={selectedStyle?.comments || []} onSaveComment={handleSaveCommentInternal} />
+            </div>
+        )},
     ];
 
     return (
@@ -471,10 +523,16 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                 })}
             </div>
 
+            {selectedStyle && (
+                <div className="mt-8 gradient-card p-4 sm:p-6 rounded-3xl animate-fade-in">
+                    <Tabs tabs={tabs} initialActiveTabLabel={initialActiveTabLabel} /> {/* Pasamos la prop del tab inicial */}
+                </div>
+            )}
+
             {selectedStyle ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in">
-                     <div className="gradient-card p-4 sm:p-6 rounded-3xl flex flex-col gap-4"> {/* Removed border-white/50 */}
-                        <h3 className="text-3xl main-title title-gradient text-center">{selectedStyle.style_name}</h3> {/* Centered title */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in mt-8"> {/* Added mt-8 to separate from tabs */}
+                     <div className="gradient-card p-4 sm:p-6 rounded-3xl flex flex-col gap-4">
+                        <h3 className="text-3xl main-title title-gradient text-center">{selectedStyle.style_name}</h3>
                         <ImageComparator before={comparatorBeforeImage} after={displayContent.imageUrl} />
                          <div className="flex gap-4 items-center">
                             <button 
@@ -482,20 +540,29 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                               className="flex-grow flex items-center justify-center gap-2 px-4 py-3 rounded-xl btn-primary text-white font-semibold"
                               aria-label="Guardar este diseño en favoritos"
                             >
-                              <HeartIcon className="w-5 h-5"/> Guardar esta Joya de Diseño
+                              <DreamHeartIcon className="w-5 h-5"/> Guardar esta Joya de Diseño
                             </button>
                             <button
                                 onClick={() => handleShare(displayContent.imageUrl, selectedStyle.style_name)}
-                                className="p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform" /* Adjusted button styling */
+                                className="p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform"
                                 aria-label={`Compartir diseño de estilo ${selectedStyle.style_name}`}
                                 title="Compartir tu inspiración"
                             >
                                 <ShareIcon className="w-6 h-6" />
                             </button>
+                            <button
+                                onClick={handleGenerateStoryClick}
+                                disabled={!selectedStyle?.imageBase64}
+                                className="p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                                aria-label={`Generar historia para el estilo ${selectedStyle.style_name}`}
+                                title="Generar una historia sobre este diseño"
+                            >
+                                <BookOpenIcon className="w-6 h-6" />
+                            </button>
                          </div>
                     </div>
 
-                    <div className="gradient-card p-4 sm:p-6 rounded-3xl"> {/* Removed border-white/50 */}
+                    <div className="gradient-card p-4 sm:p-6 rounded-3xl">
                         <RefinementPanel 
                             key={selectedStyle.style_name + project.id}
                             styleVariation={selectedStyle} 
@@ -507,14 +574,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                     </div>
                 </div>
             ) : (
-                <div className="text-center py-12 text-text-color-soft"> {/* Adjusted text color */}
+                <div className="text-center py-12 text-text-color-soft">
                     <p>Creando magia para ti, un momento...</p>
-                </div>
-            )}
-            
-            {selectedStyle && (
-                <div className="mt-8 gradient-card p-4 sm:p-6 rounded-3xl animate-fade-in"> {/* Removed border-white/50 */}
-                    <Tabs tabs={tabs} />
                 </div>
             )}
         </div>

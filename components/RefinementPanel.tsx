@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleVariation, Iteration } from '../types';
 import ImageWithFallback from './ImageWithFallback';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { RevertIcon, ChevronLeftIcon, ChevronRightIcon } from './icons/Icons';
 
 interface RefinementPanelProps {
@@ -70,6 +71,7 @@ const RefinementPanel: React.FC<RefinementPanelProps> = ({ styleVariation, onRef
                                alt={`Iteración ${index}: ${iter.prompt}`} 
                                className="w-16 h-16 rounded-lg object-cover shadow-md"
                                fallbackIconClassName="w-8 h-8"
+                               loading="lazy"
                            />
                            <span className="absolute bottom-1 right-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded-full">#{index}</span>
                        </button>

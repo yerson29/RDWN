@@ -1,4 +1,5 @@
 import React from 'react';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { CloseIcon } from './icons/Icons';
 
 interface ModalProps {

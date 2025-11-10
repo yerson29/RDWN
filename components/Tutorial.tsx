@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, DocumentIcon, HeartIcon, MagicIcon, SparklesIcon, CloseIcon } from './icons/Icons';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { ChevronLeftIcon, ChevronRightIcon, DocumentIcon, DreamHeartIcon, MagicWandIcon, SparklesIcon, CloseIcon, StarDustIcon } from './icons/Icons';
 
 interface TutorialProps {
   onClose: () => void;
@@ -7,12 +8,12 @@ interface TutorialProps {
 
 const TUTORIAL_STEPS = [
   {
-    icon: DocumentIcon,
+    icon: StarDustIcon,
     title: "Paso 1: ¡Elige tu Lienzo Mágico!",
     text: "Te invitamos a empezar tu aventura. Sube esa foto especial de tu espacio o captura un nuevo momento con la cámara. ¡Este es el primer trazo de tu obra de arte!",
   },
   {
-    icon: MagicIcon,
+    icon: MagicWandIcon,
     title: "Paso 2: ¡Explora Universos de Estilo!",
     text: "Con un toque de magia, tu universo de sueños te revelará 5 estilos únicos para tu rincón. Desliza, sueña y déjate llevar por la inspiración que cada diseño te ofrece. ¡Cada uno tiene un alma esperando a ser descubierto por ti!",
   },
@@ -22,7 +23,7 @@ const TUTORIAL_STEPS = [
     text: "Aquí es donde tu inspiración toma las riendas. Cuéntanos qué detalles sueñas para perfeccionar tu diseño. ¿Un toque de color, un mueble distinto, o un ambiente más acogedor? ¡Tu universo de sueños será tu cómplice para hacerlo realidad!",
   },
   {
-    icon: HeartIcon,
+    icon: DreamHeartIcon,
     title: "Paso 4: ¡Guarda tus Tesoros Inspiradores!",
     text: "Si un diseño te hace suspirar, atesóralo en tus 'Favoritos'. Así, tendrás siempre a mano esas joyas de inspiración que te llenan de alegría. ¡No olvides que puedes visitarlas y revivirlas cuando quieras!",
   }
@@ -58,7 +59,7 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
         </div>
 
         <h3 id="tutorial-title" className="text-4xl sm:text-5xl font-bold mb-4 main-title title-gradient leading-tight text-center"> {/* Added text-center */}
-          Cómo Crear tu Diseño Soñado
+          {currentStep.title}
         </h3>
         
         <p className="text-text-color-soft text-md sm:text-lg mb-8 min-h-[100px] sm:min-h-[120px] flex items-center justify-center text-center"> {/* Changed text-white/70 to text-text-color-soft and added text-center */}
@@ -71,13 +72,21 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
             ))}
         </div>
 
-        <div className="grid grid-cols-2 items-center gap-4">
+        <div className="grid grid-cols-3 items-center gap-4"> {/* Changed to 3 columns */}
+            <button 
+              onClick={handlePrev} 
+              disabled={step === 0}
+              className="px-6 py-3 rounded-xl btn-primary text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Paso anterior del tutorial"
+            >
+              <ChevronLeftIcon className="w-5 h-5"/> Atrás
+            </button>
             <button 
               onClick={onClose} 
-              className="px-6 py-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-md hover:scale-105 transition-transform" /* Adjusted button styling */
-              aria-label="Omitir tutorial"
+              className="px-6 py-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-md hover:scale-105 transition-transform"
+              aria-label="Cerrar tutorial"
             >
-              Omitir
+              Cerrar
             </button>
             <button 
               onClick={isLastStep ? onClose : handleNext} 
@@ -88,17 +97,6 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
               {!isLastStep && <ChevronRightIcon className="w-5 h-5"/>}
             </button>
         </div>
-        
-         {step > 0 && (
-            <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-100 hover:bg-gray-200" aria-label="Paso anterior del tutorial">
-                <ChevronLeftIcon className="w-6 h-6 text-gray-600" />
-            </button>
-        )}
-        {!isLastStep && (
-            <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-gray-100 hover:bg-gray-200" aria-label="Siguiente paso del tutorial">
-                <ChevronRightIcon className="w-6 h-6 text-gray-600" />
-            </button>
-        )}
       </div>
     </div>
   );

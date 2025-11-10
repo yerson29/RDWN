@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { ImageIcon } from './icons/Icons'; // Assuming ImageIcon is available
 
 interface ImageWithFallbackProps {
@@ -6,9 +8,10 @@ interface ImageWithFallbackProps {
   alt: string;
   className?: string;
   fallbackIconClassName?: string;
+  loading?: 'lazy' | 'eager'; // Nuevo: Propiedad para la carga diferida
 }
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, className, fallbackIconClassName }) => {
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, className, fallbackIconClassName, loading = 'lazy' }) => {
   const [imgSrc, setImgSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
 
@@ -36,7 +39,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, classNa
       alt={alt}
       className={className || ''}
       onError={handleError}
-      loading="lazy"
+      loading={loading} // Pasar la propiedad loading al elemento <img>
     />
   );
 };

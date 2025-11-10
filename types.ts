@@ -57,4 +57,4 @@ export interface FavoriteDesign {
 
 export type AppView = 'upload' | 'project' | 'archive' | 'favorites';
 
-export const ALL_STYLES = ['Moderno', 'Nórdico', 'Clásico', 'Bohemio', 'Industrial'];
+export const ALL_STYLES = ['Moderno', 'Nórdico', 'Clásico', 'Bohemio', 'Industrial', 'Rústico'];

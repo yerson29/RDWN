@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Furniture } from '../types';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { ExternalLinkIcon } from './icons/Icons';
 import ImageWithFallback from './ImageWithFallback';
 
@@ -15,7 +16,7 @@ const FurnitureList: React.FC<FurnitureListProps> = ({ furniture }) => {
         .filter(item => item.link) // Filter: only show items with a valid link
         .map((item, index) => (
         <div key={index} className="bg-gray-50 p-4 rounded-2xl shadow-md transition-all hover:scale-[1.02] flex flex-col sm:flex-row items-start gap-4"> {/* Changed bg-white/50 to bg-gray-50 */}
-          <ImageWithFallback src={item.imageUrl} alt={item.name} className="w-full sm:w-24 h-24 object-cover rounded-lg flex-shrink-0" fallbackIconClassName="w-1/2 h-1/2" />
+          <ImageWithFallback src={item.imageUrl} alt={item.name} className="w-full sm:w-24 h-24 object-cover rounded-lg flex-shrink-0" fallbackIconClassName="w-1/2 h-1/2" loading="lazy" />
           <div className="flex-grow">
             <div className="flex justify-between items-start">
               <h5 className="font-bold text-lg text-text-color">{item.name}</h5> {/* Changed text-white to text-text-color */}

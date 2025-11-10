@@ -80,7 +80,7 @@
       .gradient-card button.btn-primary { /* Primary buttons inside white card */
          background-image: var(--btn-gradient); /* Revert to gradient background */
          color: white !important;
-         box-shadow: 0 4px 15px -3px rgba(229, 73, 180, 0.4); /* Re-add shadow */
+         box-shadow: 0 4px 15px -3px rgba(229, 73, 148, 0.4); /* Re-add shadow */
       }
       .gradient-card .bg-white\/20, .gradient-card .bg-gray-200, .gradient-card .bg-gray-100 { /* Secondary buttons inside white card */
           background-color: #f0f0f0 !important; /* Light gray */
@@ -164,13 +164,13 @@
          color: white;
          font-weight: 700;
          border-radius: 12px;
-         box-shadow: 0 4px 15px -3px rgba(229, 73, 180, 0.4);
+         box-shadow: 0 4px 15px -3px rgba(229, 73, 148, 0.4);
          transition: all 0.3s ease;
          transform: translateZ(0);
       }
       .btn-primary:hover {
         opacity: 0.9;
-        box-shadow: 0 6px 20px -3px rgba(229, 73, 180, 0.5);
+        box-shadow: 0 6px 20px -3px rgba(229, 73, 148, 0.5);
         transform: scale(1.03) translateZ(0);
       }
       
@@ -292,6 +292,33 @@
         z-index: 1000;
         text-shadow: 0 2px 4px rgba(0,0,0,0.2);
       }
+      .kiss-animation-wrapper {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 1000; /* Ensure it's above other content */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .kiss-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem; /* Adjust as needed */
+        font-weight: 900;
+        text-align: center;
+        pointer-events: none;
+        animation: fadeInOut 4s ease-out forwards;
+        z-index: 1001; /* Above kisses */
+      }
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+      }
 
       /* Image Comparator Styles */
       .image-comparator {
@@ -402,16 +429,19 @@
   <script type="importmap">
 {
   "imports": {
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0/index.js",
+    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client.js",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0/index.js"
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <div id="kiss-animation-container"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

@@ -1,7 +1,8 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Project } from '../types';
-import { UploadIcon, CameraIcon, DocumentIcon, HeartIcon, MagicIcon, ViewIcon, SparklesIcon } from './icons/Icons';
+// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { UploadIcon, CameraIcon, DocumentIcon, HeartIcon, MagicIcon, ViewIcon, SparklesIcon, StarDustIcon, MagicWandIcon, DreamHeartIcon } from './icons/Icons';
 import ImageWithFallback from './ImageWithFallback';
 
 interface ImageUploadProps {
@@ -99,13 +100,13 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
             <div className="flex justify-around items-start text-center gap-4 mb-4">
                 <div className="w-1/4 flex flex-col items-center">
                     <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mb-1">
-                        <DocumentIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed text-white to text-primary-accent */}
+                        <StarDustIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed DocumentIcon to StarDustIcon */}
                     </div>
                     <span className="text-sm text-text-color font-semibold mb-2">Paso 1: Sube una foto de ese rincón especial que tu corazón anhela transformar.</span> {/* Combined text and description */}
                 </div>
                 <div className="w-1/4 flex flex-col items-center">
                     <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mb-1">
-                        <MagicIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed text-white to text-primary-accent */}
+                        <MagicWandIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed MagicIcon to MagicWandIcon */}
                     </div>
                     <span className="text-sm text-text-color font-semibold mb-2">Paso 2: Tu universo de ideas te mostrará 5 hermosos estilos para tu espacio.</span>
                 </div>
@@ -117,7 +118,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                 </div>
                 <div className="w-1/4 flex flex-col items-center">
                     <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mb-1">
-                        <HeartIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed text-white to text-primary-accent */}
+                        <DreamHeartIcon className="w-7 h-7 fill-current text-primary-accent" /> {/* Changed HeartIcon to DreamHeartIcon */}
                     </div>
                     <span className="text-sm text-text-color font-semibold mb-2">Paso 4: Cuéntale tus ideas y tu universo de sueños las hará realidad. ¡Guarda las joyas de tu inspiración!</span>
                 </div>
@@ -163,7 +164,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                 src={preview} 
                 alt="Vista previa de tu espacio" 
                 className="w-full h-full object-cover rounded-2xl" 
-                fallbackIconClassName="w-1/3 h-1/3" 
+                fallbackIconClassName="w-1/3 h-1/3"
+                loading="eager" // La imagen de vista previa es inmediatamente visible
             />
             <button onClick={removePreview} className="absolute -top-3 -right-3 bg-white text-red-500 rounded-full p-2 shadow-lg hover:bg-red-500 hover:text-white transition-all" aria-label="Quitar esta foto">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -192,6 +194,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                               alt={project.name} 
                               className="w-full h-32 object-cover" 
                               fallbackIconClassName="w-1/3 h-1/3"
+                              loading="lazy"
                           />
                           <div className="p-3">
                               <h4 className="font-bold text-base sm:text-lg truncate">{project.name}</h4> {/* Removed text-white */}
