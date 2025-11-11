@@ -1,16 +1,17 @@
 import React from 'react';
 import { AppView } from '../types';
-import { HomeIcon, BookStackIcon, DreamHeartIcon, KissIcon, StarDiamondIcon, MagicWandIcon, StarDustIcon, CloseIcon } from './icons/Icons';
+import { HomeIcon, BookStackIcon, DreamHeartIcon, KissIcon, StarDiamondIcon, MagicWandIcon, StarDustIcon, CloseIcon, ChatIcon } from './icons/Icons';
 
 interface MobileMenuProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (view: AppView, projectId?: string | null, initialStyleName?: string, initialTabLabel?: string) => void;
     currentView: AppView;
-    onRosiClick: () => void;
+    onTutorialClick: () => void; // Renamed from onRosiClick
     onThrowKiss: () => void;
     onNavigateToLatestProject: () => void;
     onDiaryClick: () => void;
+    onOpenChatbot: () => void; // New prop for opening the chatbot
 }
 
 const MobileNavButton: React.FC<{ icon: React.ReactNode, onClick: () => void, ariaLabel: string, label: string, isActive?: boolean }> = ({ icon, onClick, ariaLabel, label, isActive = false }) => (
@@ -20,13 +21,14 @@ const MobileNavButton: React.FC<{ icon: React.ReactNode, onClick: () => void, ar
                     ${isActive ? 'bg-primary-accent text-white shadow-md' : 'text-text-color hover:bg-gray-100'}`}
         aria-label={ariaLabel}
         aria-current={isActive ? 'page' : undefined}
+        role="button"
     >
         {icon}
         <span>{label}</span>
     </button>
 );
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, currentView, onRosiClick, onThrowKiss, onNavigateToLatestProject, onDiaryClick }) => {
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, currentView, onTutorialClick, onThrowKiss, onNavigateToLatestProject, onDiaryClick, onOpenChatbot }) => {
     const handleNavigateAndClose = (view: AppView, projectId?: string | null, initialStyleName?: string, initialTabLabel?: string) => {
         onNavigate(view, projectId, initialStyleName, initialTabLabel);
         onClose();
@@ -42,14 +44,19 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, cu
         onClose();
     };
 
-    const handleRosiClickAndClose = () => {
-        onRosiClick();
+    const handleTutorialClickAndClose = () => { // Renamed
+        onTutorialClick(); // Renamed
         onClose();
     }
 
     const handleThrowKissAndClose = () => {
         onThrowKiss();
         onClose(); // Close menu even if kiss animation happens
+    }
+
+    const handleOpenChatbotAndClose = () => {
+        onOpenChatbot();
+        onClose();
     }
 
     return (
@@ -65,25 +72,26 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, cu
                 aria-label="Menú de navegación principal"
             >
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-pink-50 to-purple-50">
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={handleRosiClickAndClose}>
-                        <StarDustIcon className="w-8 h-8 text-white" />
-                        <h2 className="text-3xl main-title text-white">Rosi Decora</h2>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={handleTutorialClickAndClose} role="button" aria-label="Abrir tutorial de Rosi Decora">
+                        <StarDustIcon className="w-8 h-8 text-primary-accent" />
+                        <h2 className="text-3xl main-title text-text-color">Rosi Decora</h2>
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="p-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+                        className="p-2 text-text-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary-accent"
                         aria-label="Cerrar menú"
                     >
                         <CloseIcon className="w-7 h-7" />
                     </button>
                 </div>
-                <nav className="flex flex-col gap-2 p-4">
-                    <MobileNavButton icon={<HomeIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('upload')} isActive={currentView === 'upload'} ariaLabel="Inicio" label="Inicio" />
-                    <MobileNavButton icon={<BookStackIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('archive')} isActive={currentView === 'archive'} ariaLabel="Proyectos" label="Proyectos" />
-                    <MobileNavButton icon={<StarDiamondIcon className="w-6 h-6" />} onClick={handleLatestProjectAndClose} isActive={currentView === 'project'} ariaLabel="Tu Último Estilo" label="Tu Estilo" />
-                    <MobileNavButton icon={<KissIcon className="w-6 h-6" />} onClick={handleThrowKissAndClose} ariaLabel="Enviar Besos" label="Besos" />
-                    <MobileNavButton icon={<DreamHeartIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('favorites')} isActive={currentView === 'favorites'} ariaLabel="Favoritos" label="Favoritos" />
-                    <MobileNavButton icon={<MagicWandIcon className="w-6 h-6" />} onClick={handleDiaryClickAndClose} isActive={currentView === 'project' && currentView === 'project'} ariaLabel="Tu Diario" label="Diario" />
+                <nav className="flex flex-col gap-2 p-4" aria-label="Navegación principal">
+                    <MobileNavButton icon={<HomeIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('upload')} isActive={currentView === 'upload'} ariaLabel="Ir a la página de inicio para subir imágenes" label="Inicio" />
+                    <MobileNavButton icon={<BookStackIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('archive')} isActive={currentView === 'archive'} ariaLabel="Ver todos tus proyectos guardados" label="Proyectos" />
+                    <MobileNavButton icon={<StarDiamondIcon className="w-6 h-6" />} onClick={handleLatestProjectAndClose} isActive={currentView === 'project'} ariaLabel="Ver tu último estilo de diseño" label="Tu Estilo" />
+                    <MobileNavButton icon={<KissIcon className="w-6 h-6" />} onClick={handleThrowKissAndClose} ariaLabel="Enviar un beso de magia" label="Besos" />
+                    <MobileNavButton icon={<DreamHeartIcon className="w-6 h-6" />} onClick={() => handleNavigateAndClose('favorites')} isActive={currentView === 'favorites'} ariaLabel="Ver tus diseños favoritos" label="Favoritos" />
+                    <MobileNavButton icon={<MagicWandIcon className="w-6 h-6" />} onClick={handleDiaryClickAndClose} isActive={currentView === 'diary'} ariaLabel="Acceder a tu diario de diseño" label="Diario" />
+                    <MobileNavButton icon={<ChatIcon className="w-6 h-6" />} onClick={handleOpenChatbotAndClose} isActive={false} ariaLabel="Chatear con tu asistente de diseño" label="Chat" />
                 </nav>
             </div>
         </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -11,437 +11,315 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --bg-color: #fff;
-        --text-color: #4C1D6E; /* Dark purple for general text */
-        --text-color-soft: #8E6E9E;
-        --card-bg: var(--btn-gradient); /* New: Gradient for card backgrounds */
-        --card-text-color: white; /* New: Text color on gradient cards */
-        --header-bg: rgba(255, 255, 255, 0.85); /* Default white/light transparent */
-        --primary-accent: #F43F94; /* Vivid Pink from image */
-        --secondary-accent: #9D55FF; /* Vivid Purple from image */
-        --title-font: 'Nunito', sans-serif;
-        --body-font: 'Inter', sans-serif;
-        --btn-gradient: linear-gradient(90deg, #F43F94 0%, #9D55FF 100%);
+        /* Colores Base */
+        --color-white: #fff;
+        --color-dark-purple: #4C1D6E; /* Dark purple for general text */
+        --color-soft-purple: #8E6E9E; /* Softer purple for secondary text */
+        --color-primary-pink: #F43F94; /* Vivid Pink */
+        --color-secondary-purple: #9D55FF; /* Vivid Purple */
+        --color-light-bg: #F9ECFE; /* Lighter background tint */
+        --color-light-gray: #f8f8f8;
+        --color-medium-gray: #e0e0e0;
+        --color-dark-gray: #6b7280;
+
+        /* Degradados */
+        --gradient-header: linear-gradient(90deg, var(--color-primary-pink) 0%, var(--color-secondary-purple) 100%);
+        --gradient-button: linear-gradient(90deg, var(--color-primary-pink) 0%, var(--color-secondary-purple) 100%);
+
+        /* Fuentes */
+        --font-title: 'Nunito', sans-serif;
+        --font-body: 'Inter', sans-serif;
+
+        /* Sombras */
+        --shadow-primary: 0 4px 15px -3px rgba(244, 63, 148, 0.4); /* Pinkish shadow for primary buttons */
+        --shadow-card: 0 8px 32px 0 rgba(142, 110, 158, 0.1); /* Lighter shadow for white card */
+        --shadow-card-hover: 0 10px 40px 0 rgba(142, 110, 158, 0.15); /* Slightly larger shadow on hover */
       }
 
       body {
-        font-family: var(--body-font);
-        background-color: var(--bg-color);
-        background-image: radial-gradient(circle at 50% 0, rgba(249, 236, 254, 0.7) 0%, rgba(255, 255, 255, 0) 50%);
-        color: var(--text-color); /* Default text color for non-card elements */
+        font-family: var(--font-body);
+        background-color: var(--color-white);
+        background-image: radial-gradient(circle at 50% 0, var(--color-light-bg) 0%, rgba(255, 255, 255, 0) 50%);
+        color: var(--color-dark-purple);
         transition: background-color 0.3s ease, color 0.3s ease;
       }
       
       .main-title {
-        font-family: var(--title-font);
+        font-family: var(--font-title);
         font-weight: 900;
       }
       
-      /* New combined class for gradient cards with white text */
-      .gradient-card {
-        position: relative;
-        background-color: white; /* Changed to white */
-        border-radius: 1.5rem; /* Equivalent to rounded-3xl */
-        padding: 1px; /* To make room for the border */
-        overflow: hidden; /* Hide overflow of pseudo-element */
-        box-shadow: 0 8px 32px 0 rgba(142, 110, 158, 0.1); /* Lighter shadow for white card */
-        /* Remove existing box-shadow and border from gradient-card if they conflict */
-      }
-      .gradient-card::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        padding: 2px; /* Thickness of the gradient border */
-        background: var(--btn-gradient) border-box;
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask-composite: exclude;
-        z-index: -1; /* Place behind content */
-        border-radius: inherit; /* Inherit border-radius from parent */
-      }
-
-      /* Adjust text colors and backgrounds inside new white gradient-card */
-      .gradient-card > *, /* Target direct children to reset text colors */
-      .gradient-card .text-white,
-      .gradient-card .text-white\/70 {
-          color: var(--text-color) !important; /* Default to dark text */
-          -webkit-text-fill-color: var(--text-color) !important;
-      }
-      .gradient-card .main-title,
-      .gradient-card .title-gradient {
-          -webkit-text-fill-color: var(--text-color) !important;
-          color: var(--text-color) !important; /* Ensure gradient titles are dark */
-      }
-      .gradient-card .text-xs.text-white\/70,
-      .gradient-card .text-sm.text-white\/70,
-      .gradient-card .text-gray-400, .gradient-card .text-gray-500, .gradient-card .text-gray-600, .gradient-card .text-gray-700 {
-          color: var(--text-color-soft) !important;
-      }
-      .gradient-card button.btn-primary { /* Primary buttons inside white card */
-         background-image: var(--btn-gradient); /* Revert to gradient background */
-         color: white !important;
-         box-shadow: 0 4px 15px -3px rgba(229, 73, 148, 0.4); /* Re-add shadow */
-      }
-      .gradient-card .bg-white\/20, .gradient-card .bg-gray-200, .gradient-card .bg-gray-100 { /* Secondary buttons inside white card */
-          background-color: #f0f0f0 !important; /* Light gray */
-          color: var(--text-color) !important;
-      }
-      .gradient-card .bg-white\/20:hover, .gradient-card .bg-gray-200:hover, .gradient-card .bg-gray-100:hover {
-          background-color: #e0e0e0 !important;
-      }
-      .gradient-card .border-white\/50 {
-          border-color: #f0f0f0 !important; /* Lighter border color for inner elements */
-      }
-      /* Adjust other elements that were styled for dark background */
-      .gradient-card .text-red-500 { color: #EF4444 !important; } /* Standard red */
-      .gradient-card .text-red-700 { color: #B91C1C !important; } /* Standard red */
-      .gradient-card .text-purple-700 { color: #6D28D9 !important; } /* Standard purple */
-      .gradient-card .bg-red-100 { background-color: #FEE2E2 !important; color: #DC2626 !important; }
-      .gradient-card .bg-red-100:hover { background-color: #FECACA !important; }
-      .gradient-card .bg-secondary-accent\/20 {
-          background-color: rgba(157, 85, 255, 0.1) !important; /* Lighter purple background */
-          color: var(--secondary-accent) !important;
-      }
-      .gradient-card .bg-secondary-accent\/40:hover {
-          background-color: rgba(157, 85, 255, 0.2) !important; /* Slightly darker hover */
-      }
-      .gradient-card .bg-pink-50, .gradient-card .bg-pink-50\/50, .gradient-card .bg-gray-50 {
-        background-color: #f8f8f8 !important; /* Light background for inner elements */
-      }
-      .gradient-card .bg-pink-100 {
-        background-color: #fbe9f2 !important; /* Lighter pink background for inner elements */
-      }
-
-
-      /* KEPY `bg-white-panel` FOR OTHER USE CASES IF ANY, BUT NOT FOR MODALS' INNER CONTENTS */
-      .bg-white-panel { /* Custom class for white panels, not nested inside gradient-card */
-        background-color: rgba(255, 255, 255, 0.9) !important; /* Slightly transparent white */
-        color: var(--text-color) !important; /* Dark text on white */
-      }
-      .bg-white-panel .text-white,
-      .bg-white-panel .text-white\/70,
-      .bg-white-panel .title-gradient {
-        color: var(--text-color) !important;
-        -webkit-text-fill-color: var(--text-color) !important;
-      }
-      .bg-white-panel .text-sm,
-      .bg-white-panel .text-xs {
-        color: var(--text-color-soft) !important;
-      }
-      .bg-white-panel .border-gray-200 {
-        border-color: var(--text-color-soft) !important;
-      }
-      .bg-white-panel button.bg-white { /* For white buttons on white panels */
-        background-color: rgba(255, 255, 255, 0.8) !important;
-        color: var(--text-color) !important;
-        border: 1px solid var(--text-color-soft);
-      }
-      .bg-white-panel button.bg-white:hover {
-        background-color: rgba(255, 255, 255, 1) !important;
-        box-shadow: 0 0 0 2px var(--primary-accent);
-      }
-      .bg-white-panel textarea,
-      .bg-white-panel input {
-        background-color: white !important; /* Explicitly white input fields */
-        color: var(--text-color) !important;
-        border-color: var(--text-color-soft) !important;
-      }
-      .bg-white-panel textarea::placeholder,
-      .bg-white-panel input::placeholder {
-        color: var(--text-color-soft) !important;
-      }
-
-
-      .card-shadow { /* Kept for other elements, but `gradient-card` replaces its usage for cards */
-        box-shadow: 0 8px 32px 0 rgba(142, 110, 158, 0.15);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-      }
-      
-      .btn-primary {
-         background-image: var(--btn-gradient);
-         color: white;
-         font-weight: 700;
-         border-radius: 12px;
-         box-shadow: 0 4px 15px -3px rgba(229, 73, 148, 0.4);
-         transition: all 0.3s ease;
-         transform: translateZ(0);
-      }
-      .btn-primary:hover {
-        opacity: 0.9;
-        box-shadow: 0 6px 20px -3px rgba(229, 73, 148, 0.5);
-        transform: scale(1.03) translateZ(0);
-      }
-      
       .title-gradient {
-        background-image: var(--btn-gradient);
+        background: var(--gradient-button);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-fill-color: transparent;
       }
 
-      /* Ensure header always uses the gradient as per image */
-      .header-gradient-bg {
-          background-image: var(--btn-gradient);
+      /* Base card style */
+      .gradient-card {
+        background-color: var(--color-white); 
+        border-radius: 1.5rem; /* Equivalent to rounded-3xl */
+        box-shadow: var(--shadow-card);
+        transition: box-shadow 0.3s ease-in-out;
+      }
+      .gradient-card:hover {
+        box-shadow: var(--shadow-card-hover);
       }
 
-      /* Styles for the new pill-shaped navigation buttons (Desktop) */
+      /* Text colors */
+      .text-text-color { color: var(--color-dark-purple); }
+      .text-text-color-soft { color: var(--color-soft-purple); }
+      .text-primary-accent { color: var(--color-primary-pink); }
+      .text-secondary-accent { color: var(--color-secondary-purple); }
+
+      /* Button Primary - shared style */
+      .btn-primary {
+          @apply rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300;
+          background-image: var(--gradient-button);
+          color: var(--color-white);
+          box-shadow: var(--shadow-primary);
+      }
+      .btn-primary:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          box-shadow: none;
+          transform: none;
+      }
+
+      /* Header background */
+      .header-gradient-bg {
+        background: var(--gradient-header);
+      }
+
+      /* Navigation Pills */
       .nav-pill-button {
-          background-color: var(--secondary-accent); /* Solid purple background */
-          color: white; /* White text/icons */
-          border-radius: 9999px; /* Fully rounded */
-          /* padding: 0.5rem 1rem; */ /* Removed here, controlled in component */
-          font-weight: 700;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* Subtle shadow */
-          display: inline-flex; /* For icon and text alignment */
-          align-items: center;
-          gap: 0.5rem; /* Space between icon and text */
-          white-space: nowrap; /* Prevent text wrapping */
+          @apply relative flex items-center gap-2 rounded-full font-semibold text-sm transition-all duration-300;
+          color: var(--color-white);
+          background-color: transparent;
       }
       .nav-pill-button:hover {
-          opacity: 0.9;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          background-color: rgba(255, 255, 255, 0.2);
       }
-      /* Active state for desktop buttons - subtle visual difference */
       .nav-pill-button.is-active {
-          box-shadow: 0 0 0 2px rgba(255,255,255,0.5), 0 4px 12px rgba(0,0,0,0.2);
+          background-color: var(--color-white);
+          color: var(--color-primary-pink);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       }
-
-      /* Mobile specific button style for bottom nav */
-      /* REMOVED: .nav-pill-button-mobile styles */
-
-
-      /* Ensure icons within these buttons scale properly */
-      .nav-pill-button > svg { /* Corrected from .nav-pill-button > svg, .nav-pill-button-mobile > svg */
-          flex-shrink: 0;
+      .nav-pill-button.is-active svg {
+          fill: var(--color-primary-pink);
       }
-
-
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+      .nav-pill-button svg {
+          fill: var(--color-white);
+          transition: fill 0.3s ease;
       }
-      .animate-fade-in {
-        animation: fadeIn 0.5s ease-in-out;
-      }
-      @keyframes scaleIn {
-        from { transform: scale(0.95); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-      }
-      .animate-scale-in {
-        animation: scaleIn 0.3s ease-out;
-      }
-      
-      /* Styles for Horoscope Carousel */
-      .horoscope-carousel {
-        display: flex;
-        gap: 1rem;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        padding: 1rem 0;
-      }
-      .horoscope-carousel::-webkit-scrollbar {
-          display: none;
-      }
-      .horoscope-carousel-item {
-          flex: 0 0 100%;
-          scroll-snap-align: center;
-          transition: transform 0.3s ease, opacity 0.3s ease;
-      }
-      
-      /* New global input styles */
-      input[type="text"],
-      input[type="password"],
-      textarea {
-        border-radius: 12px !important;
-        border: 1px solid #FAD1E8 !important;
-        transition: all 0.2s ease;
-        padding-top: 0.75rem;
-        padding-bottom: 0.75rem;
-      }
-      input[type="text"]:focus,
-      input[type="password"]:focus,
-      textarea:focus {
-        border-color: var(--primary-accent) !important;
-        box-shadow: 0 0 0 3px rgba(244, 63, 148, 0.2) !important;
-        outline: none !important;
-      }
-
-      /* Kisses animation */
-      @keyframes float-up {
-        0% {
-          transform: translateY(0) scale(0.5);
-          opacity: 1;
-        }
-        100% {
-          transform: translateY(-100vh) scale(1.2);
-          opacity: 0;
-        }
-      }
-      .kiss-animation {
-        position: fixed;
-        bottom: 80px;
-        font-size: 2.5rem;
-        animation: float-up 5s ease-out forwards;
-        pointer-events: none;
-        z-index: 1000;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-      .kiss-animation-wrapper {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        z-index: 1000; /* Ensure it's above other content */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .kiss-message {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 2rem; /* Adjust as needed */
-        font-weight: 900;
-        text-align: center;
-        pointer-events: none;
-        animation: fadeInOut 4s ease-out forwards;
-        z-index: 1001; /* Above kisses */
-      }
-      @keyframes fadeInOut {
-        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+      .nav-pill-button.is-active:hover { /* Override hover for active state */
+        background-color: var(--color-white);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       }
 
       /* Image Comparator Styles */
       .image-comparator {
         position: relative;
+        display: flex;
         overflow: hidden;
-        border-radius: 1rem; /* rounded-xl for consistency */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        background-color: #f0f0f0; /* Fallback/loading background */
-        min-height: 200px; /* Ensure a minimum height */
       }
 
       .image-comparator img {
-        position: absolute;
-        top: 0;
-        left: 0;
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
       }
 
-      .before-wrapper {
+      .image-comparator .before-wrapper {
         position: absolute;
         top: 0;
         left: 0;
         height: 100%;
-        width: 50%; /* Initial split, controlled by JS slider */
         overflow: hidden;
-        /* resize: horizontal; */ /* Removed as JS controls position for better UX */
-        border-right: 2px solid white; /* Separator line */
       }
 
-      .before-wrapper img {
-        width: 100%; /* Ensure the image inside `before-wrapper` covers its container */
-        height: 100%;
-        object-fit: cover;
+      .image-comparator .before-wrapper img {
+        width: auto; /* Adjust to match after image scale */
       }
 
-      .slider {
+      .image-comparator .slider {
         position: absolute;
-        left: 50%;
         top: 0;
         bottom: 0;
-        width: 2px;
-        background-color: white; /* Line color */
+        width: 4px; /* Thickness of the slider line */
+        background-color: var(--color-white);
         cursor: ew-resize;
-        transform: translateX(-50%);
         z-index: 10;
-        touch-action: pan-y; /* Allow vertical scroll, prevent horizontal */
+        transform: translateX(-50%);
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
       }
 
-      .slider-handle {
+      .image-comparator .slider-handle {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 30px;
-        height: 30px;
-        background-color: var(--primary-accent); /* Pink handle */
-        border: 3px solid white;
+        width: 32px;
+        height: 32px;
+        background-color: var(--color-white);
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
       }
-
-      .slider-handle::before,
-      .slider-handle::after {
+      .image-comparator .slider-handle::before,
+      .image-comparator .slider-handle::after {
         content: '';
         position: absolute;
         width: 2px;
         height: 12px;
-        background-color: white;
+        background-color: var(--color-primary-pink);
         border-radius: 1px;
       }
-
-      .slider-handle::before {
-        transform: translateX(-4px);
+      .image-comparator .slider-handle::before {
+        transform: translate(-4px, 0);
+      }
+      .image-comparator .slider-handle::after {
+        transform: translate(4px, 0);
+      }
+      
+      /* Scrollbar Hide Utility */
+      .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
       }
 
-      .slider-handle::after {
-        transform: translateX(4px);
+      /* Animations */
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
       }
 
-      /* Besos button highlight */
-      .btn-besos {
-          background-image: var(--btn-gradient); /* Use the existing gradient */
-          color: white;
-          animation: pulse 1.5s infinite; /* Simple pulse animation */
-          box-shadow: 0 0 0 5px rgba(244, 63, 148, 0.4); /* Pink glow */
-          position: relative;
-          z-index: 1; /* Ensure it's above other buttons in stacking context */
+      @keyframes fade-in-out {
+        0% { opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      .animate-fade-in-out {
+        animation: fade-in-out 3s infinite;
       }
 
-      .btn-besos:hover {
-          animation: none; /* Stop pulse on hover */
-          transform: scale(1.05); /* Slight enlargement on hover */
-          box-shadow: 0 0 0 8px rgba(244, 63, 148, 0.6);
+      @keyframes scale-in {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-scale-in {
+        animation: scale-in 0.3s ease-out forwards;
       }
 
-      @keyframes pulse {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 63, 148, 0.4); }
-          70% { transform: scale(1.03); box-shadow: 0 0 0 5px rgba(244, 63, 148, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(244, 63, 148, 0); }
+      @keyframes kiss-fly {
+          0% {
+              transform: translate(0, 0) scale(0.5);
+              opacity: 1;
+              filter: hue-rotate(0deg);
+          }
+          25% {
+              transform: translate(calc(var(--kiss-dx) * 0.25), calc(var(--kiss-dy) * 0.25)) scale(0.7);
+              filter: hue-rotate(90deg);
+          }
+          50% {
+              transform: translate(calc(var(--kiss-dx) * 0.5), calc(var(--kiss-dy) * 0.5)) scale(0.9);
+              filter: hue-rotate(180deg);
+          }
+          75% {
+              transform: translate(calc(var(--kiss-dx) * 0.75), calc(var(--kiss-dy) * 0.75)) scale(1.1);
+              filter: hue-rotate(270deg);
+          }
+          100% {
+              transform: translate(var(--kiss-dx), var(--kiss-dy)) scale(1.2);
+              opacity: 0;
+              filter: hue-rotate(360deg);
+          }
+      }
+
+      .kiss-animation {
+          position: fixed;
+          bottom: 20px; /* Start from near the bottom */
+          font-size: 3rem;
+          pointer-events: none;
+          z-index: 9999;
+          /* Randomize trajectory and duration slightly */
+          --kiss-dx: calc((var(--random-x, 0.5) - 0.5) * 400px); /* -200px to 200px horizontal */
+          --kiss-dy: -80vh; /* Fly upwards */
+          animation: kiss-fly calc(2.5s + var(--random-duration, 0) * 1s) ease-out forwards;
+          opacity: 0; /* Hidden initially, controlled by animation */
+          animation-delay: var(--delay, 0s); /* Add random delay */
+      }
+      /* Fallback for --random-x, etc. if not set in JS */
+      .kiss-animation:not([style*="--random-x"]) { --random-x: 0.5; }
+      .kiss-animation:not([style*="--random-duration"]) { --random-duration: 0; }
+      .kiss-animation:not([style*="--delay"]) { --delay: 0s; }
+
+      .error-message-card {
+        background-color: #fcebeb; /* Lighter red for error background */
+        border-color: #ef9a9a; /* Softer red border */
+        color: #c62828; /* Darker red text */
+      }
+      .error-message-card button {
+        color: #c62828;
+      }
+      .error-message-card button:hover {
+        color: #b71c1c;
+      }
+
+      /* Motivation Message Card */
+      .motivation-message-card {
+        background-color: var(--color-white); /* White background */
+        border-color: var(--color-medium-gray); /* Light border */
+        color: var(--color-dark-purple); /* Darker text */
+        box-shadow: 0 4px 15px -3px rgba(142, 110, 158, 0.3); /* Lighter shadow */
+      }
+      .motivation-message-card button {
+        color: var(--color-soft-purple);
+      }
+      .motivation-message-card button:hover {
+        color: var(--color-dark-purple);
+      }
+
+      /* Shimmer Effect for Image Placeholders */
+      @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+      }
+      .shimmer-effect {
+        background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+        background-size: 1000px 100%;
+        animation: shimmer 1.5s infinite linear;
       }
 
     </style>
   <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0/index.js",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client.js",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
     "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
-    <div id="kiss-animation-container"></div>
+    <div id="kiss-animation-container" aria-hidden="true"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 {
-  "name": "Rosi Decora F",
-  "description": "Una aplicación de diseño de interiores impulsada por tu universo de sueños, Rosi, para ayudarte a visualizar TU espacio en diferentes estilos. Sube una foto, y tu universo generará diseños modernos, nórdicos y clásicos, completos con recomendaciones de muebles. Refina TUS diseños con indicaciones de texto para lograr el aspecto perfecto. Gestiona TUS proyectos guardados en 'Guardados' y atesora TUS mejores diseños en 'Favoritos'.",
+  "name": "RD WNWN",
+  "description": "Una aplicación de diseño de interiores impulsada por tu universo de sueños, Rosi, para ayudarte a visualizar TU espacio en diferentes estilos. Sube una foto, y tu universo generará diseños modernos, nórdico y clásicos, completos con recomendaciones de muebles. Refina TUS diseños con indicaciones de texto para lograr el aspecto perfecto. Gestiona TUS proyectos guardados en 'Guardados' y atesora TUS mejores diseños en 'Favoritos'.",
   "requestFramePermissions": [
     "camera"
   ]

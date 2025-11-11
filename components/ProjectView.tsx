@@ -3,251 +3,41 @@ import { Project, StyleVariation, Furniture, ImageBase64, Comment } from '../typ
 import RefinementPanel from './RefinementPanel';
 import FurnitureList from './FurnitureList';
 import ImageWithFallback from './ImageWithFallback';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
-import { DreamHeartIcon, ShareIcon, EditIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, CommentIcon as DiaryIcon, BookOpenIcon, StarDustIcon } from './icons/Icons';
+import { DreamHeartIcon, ShareIcon, EditIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, CommentIcon as DiaryIcon, BookOpenIcon, StarDustIcon, SparklesIcon } from './icons/Icons';
 
 // ALL_STYLES is now imported from types.ts
 import { ALL_STYLES } from '../types';
 
-// --- INLINED COMPONENTS FOR SIMPLICITY ---
+// Import newly extracted components
+// import { CommentsSection } from './DiaryViewSections'; // Se movió al DiaryView, no se usa aquí.
+import { ImageComparator, Tabs, ColorPalette } from './UtilityComponents';
+// FIX: Se actualiza la importación para que coincida con la exportación corregida en seedData.ts
+import { REFLECTIVE_PHRASES } from '../seedData'; // Importar frases reflexivas directamente
 
-// YersonQuoteSection Component
-const YersonQuoteSection: React.FC<{ quote: string; timestamp: string }> = ({ quote, timestamp }) => (
-    <div className="p-4 bg-purple-50/50 rounded-lg border border-purple-100 mb-6 text-center">
-        <h4 className="text-xl font-bold main-title title-gradient mb-2">La Última Frase de Yerson</h4>
-        <p className="text-text-color text-lg italic mb-2">"{quote}"</p>
-        <p className="text-xs text-text-color-soft">{timestamp}</p>
-    </div>
-);
-
-// DesignHoroscope Component
-const DesignHoroscope: React.FC<{ horoscope: string }> = ({ horoscope }) => {
-    const today = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    return (
-        <div className="p-4 bg-pink-50/50 rounded-lg border border-pink-100 mb-6 text-center">
-            <h4 className="text-xl font-bold main-title title-gradient mb-2">Tu Horóscopo de Diseño</h4>
-            <p className="text-text-color text-sm mb-2">Para hoy, {today}, tu universo de sueños te susurra:</p>
-            <p className="text-text-color text-lg font-semibold">"{horoscope}"</p>
-        </div>
-    );
-};
-
-// CommentsSection Component
-const CommentsSection: React.FC<{ comments: Comment[]; onSaveComment: (text: string) => void; }> = ({ comments, onSaveComment }) => {
-    const [newComment, setNewComment] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newComment.trim()) {
-            onSaveComment(newComment.trim());
-            setNewComment('');
-        }
-    };
-
-    return (
-        <div className="mt-2">
-            <h4 className="text-2xl font-bold mb-4 main-title title-gradient">Tu Diario de Ideas</h4>
-            <form onSubmit={handleSubmit} className="mb-6">
-                <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="¿Qué te susurra tu inspiración sobre este diseño?"
-                    className="w-full p-3 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color mb-3 focus:ring-2 focus:ring-primary-accent transition" 
-                    rows={3}
-                ></textarea>
-                <button
-                    type="submit"
-                    disabled={!newComment.trim()}
-                    className="w-full px-6 py-3 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    Guardar Pensamiento
-                </button>
-            </form>
-
-            <div className="space-y-4">
-                {comments.length > 0 ? (
-                    comments.map(comment => (
-                        <div key={comment.id} className="p-4 bg-pink-50/50 rounded-lg border border-pink-100">
-                            <p className="text-text-color whitespace-pre-wrap">{comment.text}</p>
-                            <p className="text-xs text-text-color-soft mt-2 text-right">
-                                {new Date(comment.createdAt).toLocaleString()}
-                            </p>
-                        </div>
-                    ))
-                ) : (
-                    <div className="text-center py-8 px-4 border-2 border-dashed border-gray-300 rounded-lg">
-                        <DiaryIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-text-color-soft">Aún no has capturado tus pensamientos aquí. Tu diario te espera.</p>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-// ImageComparator Component
-const ImageComparator: React.FC<{ before: string; after: string }> = ({ before, after }) => {
-    const [sliderPos, setSliderPos] = useState(50);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    const handleMove = useCallback((clientX: number) => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-        const percent = (x / rect.width) * 100;
-        setSliderPos(percent);
-    }, []);
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        e.preventDefault();
-        const onMouseMove = (moveEvent: MouseEvent) => handleMove(moveEvent.clientX);
-        const onMouseUp = () => {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    };
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        const onTouchMove = (touchEvent: TouchEvent) => handleMove(touchEvent.touches[0].clientX);
-        const onTouchEnd = () => {
-            document.removeEventListener('touchmove', onTouchMove);
-            document.removeEventListener('touchend', onTouchEnd);
-        };
-        document.addEventListener('touchmove', onTouchMove);
-        document.addEventListener('touchend', onTouchEnd);
-    };
-
-    return (
-        <div ref={containerRef} className="image-comparator w-full aspect-video select-none rounded-xl">
-            <ImageWithFallback src={after} alt="After" className="object-cover" loading="eager" /> {/* Images in comparator are immediately visible */}
-            <div className="before-wrapper" style={{ width: `${sliderPos}%` }}>
-                <ImageWithFallback src={before} alt="Before" className="object-cover" loading="eager" /> {/* Images in comparator are immediately visible */}
-            </div>
-            <div
-                className="slider"
-                style={{ left: `${sliderPos}%` }}
-                onMouseDown={handleMouseDown}
-                onTouchStart={handleTouchStart}
-                role="slider"
-                aria-label="Image comparison slider"
-                aria-valuenow={sliderPos}
-                aria-valuemin={0}
-                aria-valuemax={100}
-            >
-                <div className="slider-handle">
-                    <span className="sr-only">Arrastrar para comparar</span>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Tabs Component
-const Tabs: React.FC<{
-    tabs: { label: string; content: React.ReactNode }[];
-    initialActiveTabLabel?: string; // Nuevo: Para establecer la pestaña activa al montar
-}> = ({ tabs, initialActiveTabLabel }) => {
-    const [activeTab, setActiveTab] = useState(0);
-
-    // Effect to set initial tab based on prop
-    useEffect(() => {
-        if (initialActiveTabLabel) {
-            const initialIndex = tabs.findIndex(tab => tab.label === initialActiveTabLabel);
-            if (initialIndex !== -1) {
-                setActiveTab(initialIndex);
-            }
-        } else {
-            setActiveTab(0); // Default to first tab if no initial label or not found
-        }
-    }, [initialActiveTabLabel, tabs]);
-
-    return (
-        <div>
-            <div className="border-b border-gray-200 mb-4">
-                <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
-                    {tabs.map((tab, index) => (
-                        <button
-                            key={tab.label}
-                            onClick={() => setActiveTab(index)}
-                            className={`${
-                                activeTab === index
-                                    ? 'border-primary-accent text-primary-accent'
-                                    : 'border-transparent text-text-color-soft hover:text-text-color hover:border-gray-300'
-                            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
-                            aria-selected={activeTab === index}
-                            role="tab"
-                            id={`tab-${tab.label}`}
-                            aria-controls={`tabpanel-${tab.label}`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
-            {tabs.map((tab, index) => (
-                <div 
-                    key={tab.label} 
-                    role="tabpanel" 
-                    id={`tabpanel-${tab.label}`} 
-                    aria-labelledby={`tab-${tab.label}`} 
-                    hidden={activeTab !== index}
-                >
-                    {tab.content}
-                </div>
-            ))}
-        </div>
-    );
-};
-
-// ColorPalette Component
-const ColorPalette: React.FC<{ palette: string[] }> = ({ palette }) => {
-    const [copied, setCopied] = useState(false);
-    const handleCopy = () => {
-        const textToCopy = palette.join(', ');
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        });
-    };
-
-    return (
-        <div>
-            <div className="flex flex-wrap gap-3" role="list" aria-label="Paleta de colores del estilo">
-                {palette.map((color, index) => (
-                    <div key={index} className="w-12 h-12 rounded-full shadow-md border-2 border-white" style={{ backgroundColor: color }} title={color} role="listitem" aria-label={`Color ${color}`}></div>
-                ))}
-            </div>
-            <button onClick={handleCopy} className="mt-4 flex items-center gap-2 text-sm font-semibold text-text-color hover:text-text-color-soft transition-colors" aria-live="polite">
-                <ClipboardIcon className="w-4 h-4" />
-                {copied ? '¡Copiado!' : 'Copiar Paleta'}
-            </button>
-        </div>
-    );
-};
 
 // --- MAIN COMPONENT ---
 
 interface ProjectViewProps {
   project: Project;
   initialStyleName?: string;
-  onRefine: (project: Project, styleName: string, prompt: string) => void;
+  onGenerateRefinement: (base64Data: string, mimeType: string, prompt: string, styleName: string) => Promise<{ newImage: ImageBase64; newDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> }>; // Nuevo prop
+  onCommitRefinement: (projectId: string, styleName: string, prompt: string, generatedImage: ImageBase64, generatedDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'>, currentIterationIndex: number) => void; // Nuevo prop
   onFavorite: (designToFavorite: StyleVariation, projectId: string, projectName: string) => void;
-  onRevert: (project: Project, styleName: string) => void;
+  // onRevert: (project: Project, styleName: string) => void; // Eliminado
   onSaveProjectName: (newName: string) => void;
   onSaveComment: (projectId: string, styleName: string, text: string) => void;
   onGenerateStory: (imageBase64: ImageBase64, styleName: string, projectAnalysis: string) => void;
   initialActiveTabLabel?: string; // Nuevo: Para establecer la pestaña activa al montar
-  yersonQuote: string; // New prop for Yerson's quote
-  yersonQuoteTimestamp: string; // New prop for Yerson's quote timestamp
-  designHoroscope: string; // New prop for design horoscope
+  showRefineTutorial: boolean; // Prop para controlar el tutorial
+  setShowRefineTutorial: React.Dispatch<React.SetStateAction<boolean>>; // Setter para el tutorial
+  onGenerateNextStyle: (projectId: string) => Promise<void>; // NUEVO: para generar estilos individualmente
 }
 
 
-const StyleCard: React.FC<{ variation: StyleVariation; onSelect: () => void; isSelected: boolean }> = ({ variation, onSelect, isSelected }) => {
+const StyleCard: React.FC<{ variation: StyleVariation; onSelect: () => void; isSelected: boolean; phrase: string }> = ({ variation, onSelect, isSelected, phrase }) => {
     const latestIteration = variation.iterations.length > 0 ? variation.iterations[variation.iterations.length - 1] : null;
-    const displayImage = latestIteration ? latestIteration.imageUrl : variation.imageUrl;
+    // Ensure `displayImage` is null if no valid image URL
+    const displayImage = latestIteration?.imageUrl || variation.imageUrl || null;
 
     return (
         <div 
@@ -255,59 +45,79 @@ const StyleCard: React.FC<{ variation: StyleVariation; onSelect: () => void; isS
             onClick={onSelect}
             aria-label={`Seleccionar estilo ${variation.style_name}`}
             role="button"
+            tabIndex={0}
         >
             <ImageWithFallback 
-                src={displayImage} 
+                src={displayImage} // displayImage can be string | null
                 alt={variation.style_name} 
-                className="w-full h-24 sm:h-32 object-cover" 
+                className="w-full h-24 sm:h-32 object-cover animate-fade-in" // Added animate-fade-in here
                 fallbackIconClassName="w-1/2 h-1/2"
                 loading="lazy"
             />
             <div className="p-3">
                 <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{variation.style_name}</h3>
+                <p className="text-xs text-text-color-soft italic mt-1">{phrase}</p>
             </div>
         </div>
     );
 };
 
-const StyleCardSkeleton: React.FC<{ styleName: string; originalImage: string }> = ({ styleName, originalImage }) => (
-    <div className="gradient-card rounded-2xl overflow-hidden">
+const StyleCardSkeleton: React.FC<{ styleName: string; originalImage: string | null; phrase: string; isLoading?: boolean }> = ({ styleName, originalImage, phrase, isLoading = false }) => (
+    <div className="gradient-card rounded-2xl overflow-hidden animate-fade-in">
         <div className="relative w-full h-24 sm:h-32">
+            {/* Show a blurred version of the original image as background */}
             <ImageWithFallback
-                src={originalImage}
+                src={originalImage} // originalImage can be string | null
                 alt="Cargando estilo..."
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover blur-sm brightness-75" 
                 fallbackIconClassName="w-1/2 h-1/2"
                 loading="lazy"
             />
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                 <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-primary-accent"></div>
+            {/* Overlay with spinner and loading phrase */}
+            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-2">
+                 {isLoading && <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-primary-accent mb-2"></div>}
+                 <p className="text-white text-xs text-center font-semibold">{phrase}</p>
             </div>
         </div>
         <div className="p-3">
-            <h3 className="text-sm sm:text-base font-bold text-text-color truncate">{styleName}</h3>
+            <h3 className="text-sm sm:text-base font-bold text-text-color truncate shimmer-effect rounded-md w-3/4 h-5 animate-none"></h3> {/* Simulate text */}
         </div>
     </div>
 );
 
 
-const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, onRefine, onFavorite, onRevert, onSaveProjectName, onSaveComment, onGenerateStory, initialActiveTabLabel, yersonQuote, yersonQuoteTimestamp, designHoroscope }) => {
+const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, onGenerateRefinement, onCommitRefinement, onFavorite, onSaveProjectName, onSaveComment, onGenerateStory, initialActiveTabLabel, showRefineTutorial, setShowRefineTutorial, onGenerateNextStyle }) => {
     const [selectedStyle, setSelectedStyle] = useState<StyleVariation | null>(null);
     const [currentIterationIndex, setCurrentIterationIndex] = useState(0);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newProjectName, setNewProjectName] = useState(project.name);
+    const [isGeneratingSingleStyle, setIsGeneratingSingleStyle] = useState(false); // NEW: State for single style generation
+    const [generatedStyleErrors, setGeneratedStyleErrors] = useState<Record<string, string | null>>({}); // NEW: Track errors for individual style generation
+
+    // Memoize phrases to remain consistent for each style card across re-renders
+    const stylePhrases = useMemo(() => {
+        const phrasesMap: Record<string, string> = {};
+        ALL_STYLES.forEach(styleName => {
+            phrasesMap[styleName] = REFLECTIVE_PHRASES[Math.floor(Math.random() * REFLECTIVE_PHRASES.length)];
+        });
+        return phrasesMap;
+    }, [project.id]); // Re-generate phrases only if project.id changes (REFLECTIVE_PHRASES is constant)
 
     // Effect to initialize the selected style from various sources (props, localStorage, or fallback)
     useEffect(() => {
-        if (project.styleVariations.length === 0) {
-            return; // Wait for variations to be loaded
+        // Find existing style variations
+        const availableStyles = project.styleVariations;
+    
+        if (availableStyles.length === 0) {
+            setSelectedStyle(null); // No styles loaded yet
+            return; 
         }
     
         let styleToSelect: StyleVariation | undefined;
     
         // Priority 1: A specific style name is passed in props (e.g., from favorites view or initial project load)
         if (initialStyleName) {
-            styleToSelect = project.styleVariations.find(s => s.style_name === initialStyleName);
+            styleToSelect = availableStyles.find(s => s.style_name === initialStyleName);
         }
     
         // Priority 2: A style was previously selected for this project (from localStorage)
@@ -316,25 +126,29 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                 const savedStyles: Record<string, string> = JSON.parse(localStorage.getItem('rosi-decora-selected-styles') || '{}');
                 const savedStyleName = savedStyles[project.id];
                 if (savedStyleName) {
-                    styleToSelect = project.styleVariations.find(s => s.style_name === savedStyleName);
+                    styleToSelect = availableStyles.find(s => s.style_name === savedStyleName);
                 }
             } catch (e) {
                 console.error("Error reading saved styles from localStorage", e);
             }
         }
     
-        // Priority 3: Fallback to the first available style variation
+        // Priority 3: Fallback to the first *available* style variation
         if (!styleToSelect) {
-            styleToSelect = project.styleVariations[0];
+            styleToSelect = availableStyles[0];
         }
     
         // Only update state if the new style is different from the current one to avoid unnecessary re-renders
         if (styleToSelect && styleToSelect.style_name !== selectedStyle?.style_name) {
             setSelectedStyle(styleToSelect);
+            // Cuando se cambia el estilo, también se resetea el índice de la iteración a la última
+            // para que los botones de deshacer/rehacer tengan un estado inicial limpio.
+            setCurrentIterationIndex(styleToSelect.iterations.length);
         }
-    // This effect should only run when the project context changes, not on every selection change within the view.
+    // This effect should run when project.styleVariations changes (e.g., new styles arrive from streaming)
+    // and also when the project.id changes (new project loaded).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [project.id, project.styleVariations, initialStyleName]);
+    }, [project.id, project.styleVariations, initialStyleName]); // Added project.styleVariations as dependency
 
     // Effect to auto-save the selected style to localStorage and reset the iteration view when it changes.
     useEffect(() => {
@@ -350,7 +164,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                 console.error("Error saving selected style to localStorage", e);
             }
             
-            // When style changes, view the latest iteration of it
+            // Cuando se selecciona un estilo, siempre mostrar la última iteración
             setCurrentIterationIndex(selectedStyle.iterations.length);
         }
     }, [selectedStyle, project.id]);
@@ -359,12 +173,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
         setCurrentIterationIndex(index);
     }, []);
 
-    const handleRevertInternal = useCallback((styleName: string) => {
-        onRevert(project, styleName);
-        if (selectedStyle && currentIterationIndex === selectedStyle.iterations.length) {
-            setCurrentIterationIndex(prev => Math.max(0, prev - 1));
-        }
-    }, [project, selectedStyle, currentIterationIndex, onRevert]);
+    // handleRevertInternal eliminado, la lógica se maneja directamente en RefinementPanel con onSelectIteration
 
     const handleNameSave = () => {
         if (newProjectName.trim() && newProjectName.trim() !== project.name) {
@@ -376,23 +185,29 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
     const handleFavoriteClick = () => {
       if (!selectedStyle) return;
 
-      const currentIteration = (currentIterationIndex === selectedStyle.iterations.length)
-          ? selectedStyle
-          : selectedStyle.iterations[currentIterationIndex];
+      // Obtener el contenido de la iteración actual (o el estilo base si index es 0)
+      const currentIterationContent = (currentIterationIndex === selectedStyle.iterations.length)
+          ? selectedStyle // Contenido del estilo original (cuando currentIterationIndex apunta al final)
+          : selectedStyle.iterations[currentIterationIndex]; // Contenido de una iteración específica
       
-      if (!currentIteration) return;
+      if (!currentIterationContent) return;
 
+      // Crear una copia del StyleVariation o Iteration para guardar en favoritos
       const designSnapshot: StyleVariation = {
-          ...JSON.parse(JSON.stringify(currentIteration)),
-          style_name: selectedStyle.style_name,
-          iterations: [],
-          comments: [],
+          ...JSON.parse(JSON.stringify(currentIterationContent)), // Clonar para evitar mutaciones directas
+          style_name: selectedStyle.style_name, // Asegurarse de que el nombre del estilo sea el del selectedStyle
+          iterations: [], // Los favoritos no guardan historial de iteraciones
+          comments: [], // Los favoritos no guardan comentarios específicos de la variación
       };
       
       onFavorite(designSnapshot, project.id, project.name);
     };
 
-    const handleShare = async (imageUrl: string, styleName: string) => {
+    const handleShare = async (imageUrl: string | null, styleName: string) => {
+        if (!imageUrl) {
+            alert("No hay imagen para compartir.");
+            return;
+        }
         try {
             const response = await fetch(imageUrl);
             const blob = await response.blob();
@@ -401,7 +216,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
             if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                 await navigator.share({
                     title: `Tu diseño de ${project.name} - Estilo ${styleName}`,
-                    text: `Rosi, mira este diseño que has creado con la ayuda de tu universo de sueños.`,
+                    text: `Mira este diseño que has creado con la ayuda de tu universo de sueños.`, // Ajustado
                     files: [file],
                 });
             } else {
@@ -420,14 +235,18 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
     };
 
     const handleGenerateStoryClick = () => {
-        if (selectedStyle?.imageBase64 && selectedStyle.style_name && project.analysis) {
+        if (selectedStyle?.imageBase64?.data && selectedStyle.style_name && project.analysis) {
             onGenerateStory(selectedStyle.imageBase64, selectedStyle.style_name, project.analysis);
+        } else {
+            alert("No hay imagen para generar una historia.");
         }
     };
 
     const displayContent = useMemo(() => {
-        if (!selectedStyle) return { imageUrl: project.originalImage, description: '', palette: [], furniture_recommendations: [] };
+        if (!selectedStyle) return { imageUrl: project.originalImage, description: '', palette: [], furniture_recommendations: [] as Furniture[], currentImageBase64: null };
 
+        // El índice `selectedStyle.iterations.length` representa el estado inicial del estilo (sin iteraciones aplicadas).
+        // Las iteraciones se indexan desde 0.
         const allContent = [
             {
                 imageUrl: selectedStyle.imageUrl,
@@ -445,6 +264,9 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
             })),
         ];
 
+        // currentIterationIndex 0 se refiere al estado inicial, 1 a la primera iteración, etc.
+        // Si currentIterationIndex es igual a allContent.length, significa que estamos en la última iteración
+        // o en el estado "original" si no hay iteraciones.
         const currentDisplay = allContent[currentIterationIndex];
 
         return {
@@ -457,26 +279,47 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
     }, [selectedStyle, currentIterationIndex, project.originalImage]);
 
     const comparatorBeforeImage = useMemo(() => {
-        if (!selectedStyle) return project.originalImage;
+        if (!selectedStyle) return project.originalImage; 
+        
+        // Si currentIterationIndex es 0, el "antes" es la imagen original del proyecto.
         if (currentIterationIndex === 0) {
             return project.originalImage;
-        } else {
-            return selectedStyle.imageUrl;
+        } 
+        // Si currentIterationIndex > 0, el "antes" es la imagen de la iteración anterior (currentIterationIndex - 1).
+        else if (currentIterationIndex > 0 && selectedStyle.iterations[currentIterationIndex - 1]) {
+            return selectedStyle.iterations[currentIterationIndex - 1].imageUrl;
         }
+        // Fallback: si no hay iteraciones y no es el original, debería ser la imagen base del estilo.
+        // Esto cubrirá el caso donde currentIterationIndex es 0 pero ya hay iteraciones y queremos comparar el estilo base con la primera.
+        return selectedStyle.imageUrl; 
     }, [project.originalImage, selectedStyle, currentIterationIndex]);
+
+    // NEW: Logic for generating next style
+    const allStylesGenerated = project.styleVariations.length === ALL_STYLES.length;
+    const nextStyleName = ALL_STYLES.find(
+        style => !project.styleVariations.some(sv => sv.style_name === style)
+    );
+
+    const handleGenerateNextStyleClick = async () => {
+        if (!nextStyleName || isGeneratingSingleStyle) return;
+        setIsGeneratingSingleStyle(true);
+        setGeneratedStyleErrors(prev => ({ ...prev, [nextStyleName]: null })); // Clear previous error
+        try {
+            await onGenerateNextStyle(project.id);
+        } catch (error: any) {
+            console.error(`Error generating style ${nextStyleName}:`, error);
+            setGeneratedStyleErrors(prev => ({ ...prev, [nextStyleName]: error.message || "Error desconocido" }));
+        } finally {
+            setIsGeneratingSingleStyle(false);
+        }
+    };
+
 
     type TabItem = { label: string; content: React.ReactNode };
     const tabs: TabItem[] = [
         { label: 'Inspiración', content: <p className="text-text-color-soft">{displayContent.description}</p> },
-        { label: 'Tesoros', content: displayContent.furniture_recommendations && displayContent.furniture_recommendations.length > 0 ? <FurnitureList furniture={displayContent.furniture_recommendations} /> : <p className="text-text-color-soft">Aún no se han encontrado tesoros para este estilo. ¡Sigue explorando!</p> },
+        { label: 'De Compras', content: displayContent.furniture_recommendations && displayContent.furniture_recommendations.length > 0 ? <FurnitureList furniture={displayContent.furniture_recommendations} /> : <p className="text-text-color-soft">Aún no se han encontrado tesoros para este estilo. ¡Sigue explorando!</p> },
         { label: 'Colores', content: displayContent.palette && displayContent.palette.length > 0 ? <ColorPalette palette={displayContent.palette} /> : <p className="text-text-color-soft">No hay una paleta de colores definida para este estilo.</p> },
-        { label: 'Tu Diario', content: (
-            <div>
-                <YersonQuoteSection quote={yersonQuote} timestamp={yersonQuoteTimestamp} />
-                <DesignHoroscope horoscope={designHoroscope} />
-                <CommentsSection comments={selectedStyle?.comments || []} onSaveComment={handleSaveCommentInternal} />
-            </div>
-        )},
     ];
 
     return (
@@ -489,12 +332,12 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                         onChange={(e) => setNewProjectName(e.target.value)} 
                         onBlur={handleNameSave}
                         onKeyDown={(e) => { if (e.key === 'Enter') handleNameSave(); if (e.key === 'Escape') setIsEditingName(false); }}
-                        className="text-3xl sm:text-4xl text-center font-bold p-2 bg-white/80 rounded-lg border-2 border-secondary-accent focus:outline-none focus:ring-2 focus:ring-primary-accent transition main-title text-text-color"
+                        className="text-3xl sm:text-4xl text-center font-bold p-2 bg-white/80 rounded-lg border-2 border-secondary-accent/50 focus:outline-none focus:ring-2 focus:ring-primary-accent transition main-title text-text-color"
                         autoFocus
                         aria-label="Editar nombre del proyecto"
                     />
                 ) : (
-                    <h2 className="text-3xl sm:text-4xl main-title font-bold text-center title-gradient cursor-pointer" onClick={() => setIsEditingName(true)}>
+                    <h2 className="text-3xl sm:text-4xl main-title font-bold text-center title-gradient cursor-pointer" onClick={() => setIsEditingName(true)} tabIndex={0} aria-label={`Nombre del proyecto: ${project.name}. Haz clic para editar.`}>
                         {project.name}
                     </h2>
                 )}
@@ -508,6 +351,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
             <div className="grid grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-8">
                 {ALL_STYLES.map(styleName => {
                     const variation = project.styleVariations.find(v => v.style_name === styleName);
+                    const phrase = stylePhrases[styleName] || REFLECTIVE_PHRASES[0]; // Fallback phrase
+
                     if (variation) {
                         return (
                             <StyleCard 
@@ -515,25 +360,58 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                                 variation={variation} 
                                 isSelected={selectedStyle?.style_name === variation.style_name}
                                 onSelect={() => setSelectedStyle(variation)}
+                                phrase={phrase}
                             />
                         );
                     } else {
-                        return <StyleCardSkeleton key={styleName} styleName={styleName} originalImage={project.originalImage} />;
+                        // Show skeleton card while waiting for generation
+                        return <StyleCardSkeleton 
+                                    key={styleName} 
+                                    styleName={styleName} 
+                                    originalImage={project.originalImage} 
+                                    phrase={generatedStyleErrors[styleName] || phrase} // Show error or phrase
+                                    isLoading={isGeneratingSingleStyle && nextStyleName === styleName} // Loading only if it's the current one being generated
+                                />;
                     }
                 })}
             </div>
 
+            {!allStylesGenerated && (
+                <div className="text-center mt-8">
+                    <button
+                        onClick={handleGenerateNextStyleClick}
+                        disabled={isGeneratingSingleStyle || !nextStyleName}
+                        className="px-8 py-4 btn-primary text-lg font-semibold shadow-xl rounded-full flex items-center justify-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label={nextStyleName ? `Generar estilo ${nextStyleName}` : "Todos los estilos generados"}
+                    >
+                        {isGeneratingSingleStyle ? (
+                            <>
+                                <SparklesIcon className="w-6 h-6 animate-spin" />
+                                Tejiendo Estilo {nextStyleName}...
+                            </>
+                        ) : (
+                            <>
+                                {project.styleVariations.length === 0 ? "Generar Primer Estilo" : `Generar Siguiente Estilo: ${nextStyleName}`}
+                            </>
+                        )}
+                    </button>
+                    {generatedStyleErrors[nextStyleName!] && (
+                        <p className="text-red-500 text-sm mt-2">Error al generar {nextStyleName}: {generatedStyleErrors[nextStyleName!]}</p>
+                    )}
+                </div>
+            )}
+
             {selectedStyle && (
                 <div className="mt-8 gradient-card p-4 sm:p-6 rounded-3xl animate-fade-in">
-                    <Tabs tabs={tabs} initialActiveTabLabel={initialActiveTabLabel} /> {/* Pasamos la prop del tab inicial */}
+                    <Tabs tabs={tabs} defaultActiveTabLabel={initialActiveTabLabel} />
                 </div>
             )}
 
             {selectedStyle ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in mt-8"> {/* Added mt-8 to separate from tabs */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in mt-8">
                      <div className="gradient-card p-4 sm:p-6 rounded-3xl flex flex-col gap-4">
                         <h3 className="text-3xl main-title title-gradient text-center">{selectedStyle.style_name}</h3>
-                        <ImageComparator before={comparatorBeforeImage} after={displayContent.imageUrl} />
+                        <ImageComparator before={comparatorBeforeImage || null} after={displayContent.imageUrl || null} />
                          <div className="flex gap-4 items-center">
                             <button 
                               onClick={handleFavoriteClick} 
@@ -544,7 +422,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                             </button>
                             <button
                                 onClick={() => handleShare(displayContent.imageUrl, selectedStyle.style_name)}
-                                className="p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform"
+                                className="p-3 rounded-xl bg-gray-200 text-text-color hover:bg-gray-300 transition-colors shadow-md hover:shadow-lg"
                                 aria-label={`Compartir diseño de estilo ${selectedStyle.style_name}`}
                                 title="Compartir tu inspiración"
                             >
@@ -552,8 +430,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
                             </button>
                             <button
                                 onClick={handleGenerateStoryClick}
-                                disabled={!selectedStyle?.imageBase64}
-                                className="p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={!displayContent.currentImageBase64?.data} // Disable if current displayed content has no base64 image data
+                                className="p-3 rounded-xl bg-gray-200 text-text-color hover:bg-gray-300 transition-colors shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 aria-label={`Generar historia para el estilo ${selectedStyle.style_name}`}
                                 title="Generar una historia sobre este diseño"
                             >
@@ -564,18 +442,26 @@ const ProjectView: React.FC<ProjectViewProps> = ({ project, initialStyleName, on
 
                     <div className="gradient-card p-4 sm:p-6 rounded-3xl">
                         <RefinementPanel 
-                            key={selectedStyle.style_name + project.id}
+                            key={selectedStyle.style_name + project.id} // Key para forzar remount si el estilo o proyecto cambian
+                            projectId={project.id}
                             styleVariation={selectedStyle} 
-                            onRefine={(prompt) => onRefine(project, selectedStyle.style_name, prompt)}
-                            onRevert={() => handleRevertInternal(selectedStyle.style_name)} 
+                            onGenerateRefinement={onGenerateRefinement} // Prop para generar preview
+                            onCommitRefinement={onCommitRefinement}   // Prop para aplicar refinamiento
+                            // onRevert eliminado
                             currentIterationIndex={currentIterationIndex}
                             onSelectIteration={handleSelectIteration}
+                            showRefineTutorial={showRefineTutorial}
+                            setShowRefineTutorial={setShowRefineTutorial}
                         />
                     </div>
                 </div>
             ) : (
                 <div className="text-center py-12 text-text-color-soft">
-                    <p>Creando magia para ti, un momento...</p>
+                    {allStylesGenerated ? (
+                        <p>Todos los estilos han sido generados. ¡Explora y refina tus diseños!</p>
+                    ) : (
+                        <p>Haz clic en "Generar Primer Estilo" para comenzar a descubrir tu universo de sueños.</p>
+                    )}
                 </div>
             )}
         </div>

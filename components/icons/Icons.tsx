@@ -200,3 +200,9 @@ export const MenuIcon: React.FC<IconProps> = (props) => (
     <path fillRule="evenodd" d="M3 6.75A.75.75 0 013.75 6h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 6.75zM3 12a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 12zm0 5.25a.75.75 0 01.75-.75h16.5a.75.75 0 010 1.5H3.75A.75.75 0 013 17.25z" clipRule="evenodd" />
   </svg>
 );
+
+export const ChatIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path fillRule="evenodd" d="M4.5 5.25a3 3 0 013-3h11.25a3 3 0 013 3v4.5a3 3 0 01-3 3h-9v3.75a3 3 0 01-3 3h-.75a3 3 0 01-3-3V7.5a3 3 0 013-3zM7.5 6a1.5 1.5 0 00-1.5 1.5v3a1.5 1.5 0 001.5 1.5h11.25a1.5 1.5 0 001.5-1.5v-4.5a1.5 1.5 0 00-1.5-1.5H7.5zm-1.5 8.25a1.5 1.5 0 011.5-1.5h.75a1.5 1.5 0 011.5 1.5v.75a1.5 1.5 0 01-1.5 1.5h-.75a1.5 1.5 0 01-1.5-1.5v-.75z" clipRule="evenodd" />
+  </svg>
+);

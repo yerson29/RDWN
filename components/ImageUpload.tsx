@@ -1,25 +1,42 @@
-
 import React, { useState, useCallback, useRef } from 'react';
-import { Project } from '../types';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
+import { Project, ImageBase64 } from '../types';
 import { UploadIcon, CameraIcon, DocumentIcon, HeartIcon, MagicIcon, ViewIcon, SparklesIcon, StarDustIcon, MagicWandIcon, DreamHeartIcon } from './icons/Icons';
 import ImageWithFallback from './ImageWithFallback';
+// FIX: Se actualiza la importación para que coincida con la exportación corregida en seedData.ts
+import { inspirationStyleImages } from '../seedData'; // Import the new inspiration images
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void;
   recentProjects: Project[];
   onViewProject: (projectId: string) => void;
+  aspectRatio: '1:1' | '3:4' | '4:3' | '9:16' | '16:9';
+  setAspectRatio: React.Dispatch<React.SetStateAction<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>>;
 }
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects, onViewProject }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects, onViewProject, aspectRatio, setAspectRatio }) => {
   const [dragActive, setDragActive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to convert base64 to File object
+  const base64ToFile = (base64: ImageBase64, fileName: string): File => {
+    // Ensure base64.data is not null before proceeding
+    if (!base64.data) throw new Error("ImageBase64 data cannot be null when converting to File.");
+
+    const mime = base64.mimeType;
+    const bstr = atob(base64.data);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], fileName, { type: mime });
+  };
 
   const handleFile = useCallback((selectedFile: File) => {
      if (!selectedFile) return;
@@ -78,6 +95,16 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
       onImageUpload(file);
     }
   };
+
+  const handleSelectPredefinedImage = (imageBase64: ImageBase64, name: string) => {
+    // Check if data is null, prevent conversion to File if it is.
+    if (!imageBase64.data) {
+        alert("No se puede usar esta imagen predefinida porque no tiene datos de imagen válidos.");
+        return;
+    }
+    const predefinedFile = base64ToFile(imageBase64, `${name.replace(/\s/g, '_')}.jpg`);
+    onImageUpload(predefinedFile);
+  };
   
   return (
     <div className="max-w-4xl mx-auto flex flex-col items-center gap-8">
@@ -133,7 +160,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
 
       {!preview ? (
         <form 
-          className={`w-full max-w-2xl h-64 border-4 border-dashed rounded-3xl flex flex-col justify-center items-center text-center p-4 transition-all duration-300 ${dragActive ? 'border-primary-accent bg-pink-50' : 'border-secondary-accent/50 bg-white'}`} /* Changed bg-pink-50 to bg-white for consistency with new card style */
+          className={`w-full max-w-2xl h-auto min-h-[20rem] border-4 border-dashed rounded-3xl flex flex-col justify-center items-center text-center p-4 sm:p-8 transition-all duration-300 ${dragActive ? 'border-primary-accent bg-pink-50' : 'border-secondary-accent/50 bg-white'}`}
           onDragEnter={handleDrag} 
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -142,18 +169,37 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
         >
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleChange} aria-label="Seleccionar archivo de imagen"/>
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleChange} aria-label="Tomar foto con la cámara"/>
-          <p className="text-text-color-soft mb-4">Arrastra aquí la foto de tu rincón especial</p> {/* Changed text-white/70 to text-text-color-soft */}
-          <div className="flex flex-row gap-4"> {/* Changed sm:flex-row to flex-row to ensure horizontal layout on all screen sizes */}
+          <p className="text-text-color-soft mb-4 text-lg">Arrastra aquí la foto de tu rincón especial</p>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
               <button type="button" onClick={() => onButtonClick(fileInputRef)} className="px-8 py-3 btn-primary" aria-label="Seleccionar archivo desde el sistema">
                 Elige una Foto
               </button>
-              <button type="button" onClick={() => onButtonClick(cameraInputRef)} className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-gray-200 text-gray-700 font-semibold shadow-lg hover:scale-105 transition-transform" aria-label="Usar la cámara para tomar una foto"> {/* Adjusted button styling */}
+              <button type="button" onClick={() => onButtonClick(cameraInputRef)} className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-gray-200 text-text-color font-semibold shadow-lg hover:scale-105 transition-transform" aria-label="Usar la cámara para tomar una foto">
                 <CameraIcon className="w-6 h-6"/>
                 Usa la Cámara
               </button>
           </div>
-          {/* New "Regenerar" button */}
-          <button type="button" onClick={() => onButtonClick(fileInputRef)} className="mt-4 px-8 py-3 btn-primary" aria-label="Generar nuevas ideas para tu espacio">
+          {/* Aspect Ratio Selector */}
+          <div className="mt-4 w-full max-w-xs">
+              <label htmlFor="aspect-ratio-select" className="block text-sm font-medium text-text-color-soft mb-2">
+                  Relación de Aspecto para el Diseño:
+              </label>
+              <select
+                  id="aspect-ratio-select"
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value as '1:1' | '3:4' | '4:3' | '9:16' | '16:9')}
+                  className="w-full p-2 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color focus:ring-2 focus:ring-primary-accent transition"
+                  aria-label="Seleccionar relación de aspecto de la imagen"
+              >
+                  <option value="1:1">1:1 (Cuadrado)</option>
+                  <option value="4:3">4:3 (Horizontal)</option>
+                  <option value="3:4">3:4 (Vertical)</option>
+                  <option value="16:9">16:9 (Panorámica)</option>
+                  <option value="9:16">9:16 (Retrato)</option>
+              </select>
+          </div>
+          {/* New "Regenerar" button to imply starting fresh */}
+          <button type="button" onClick={() => onButtonClick(fileInputRef)} className="mt-8 px-8 py-3 btn-primary" aria-label="Generar nuevas ideas para tu espacio">
               ¿Qué nueva inspiración anhela tu corazón hoy?
           </button>
         </form>
@@ -187,20 +233,56 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                           onClick={() => onViewProject(project.id)}
                           className="gradient-card rounded-2xl overflow-hidden group transition-all duration-300 hover:-translate-y-1 cursor-pointer"
                           role="button"
+                          tabIndex={0}
                           aria-label={`Ver la inspiración: ${project.name}`}
                       >
                           <ImageWithFallback 
-                              src={project.originalImage} 
+                              src={project.originalImage} // project.originalImage can be string | null
                               alt={project.name} 
                               className="w-full h-32 object-cover" 
                               fallbackIconClassName="w-1/3 h-1/3"
                               loading="lazy"
                           />
                           <div className="p-3">
-                              <h4 className="font-bold text-base sm:text-lg truncate">{project.name}</h4> {/* Removed text-white */}
-                              <p className="text-xs sm:text-sm text-text-color-soft">Creado el: {new Date(project.createdAt).toLocaleDateString()}</p> {/* Changed text-white/70 to text-text-color-soft */}
+                              <h4 className="font-bold text-base sm:text-lg truncate text-text-color">{project.name}</h4>
+                              <p className="text-xs sm:text-sm text-text-color-soft">Creado el: {new Date(project.createdAt).toLocaleDateString()}</p>
                           </div>
                       </div>
+                  ))}
+              </div>
+          </div>
+      )}
+
+      {/* NEW SECTION: Elige tu Estilo de Rosi */}
+      {inspirationStyleImages.length > 0 && (
+          <div className="w-full mt-16">
+              <h3 className="text-3xl sm:text-4xl main-title title-gradient text-center mb-6">Empieza con la Inspiración de Rosi</h3>
+              <p className="text-text-color-soft text-center mb-8">
+                  ¿No tienes una foto a mano? Elige una de estas inspiraciones predefinidas para que tu universo de sueños haga su magia y cree un nuevo proyecto para ti.
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {inspirationStyleImages.map(inspiration => (
+                      <button
+                          key={inspiration.id}
+                          onClick={() => handleSelectPredefinedImage(inspiration.image, inspiration.name)}
+                          className="gradient-card rounded-2xl overflow-hidden group transition-all duration-300 hover:-translate-y-1 cursor-pointer text-left"
+                          aria-label={`Seleccionar estilo predefinido: ${inspiration.name}`}
+                          role="button"
+                          tabIndex={0}
+                      >
+                          <ImageWithFallback
+                              src={inspiration.image.data
+                                  ? `data:${inspiration.image.mimeType};base64,${inspiration.image.data}`
+                                  : null}
+                              alt={inspiration.name}
+                              className="w-full h-32 object-cover"
+                              fallbackIconClassName="w-1/3 h-1/3"
+                              loading="lazy"
+                          />
+                          <div className="p-3">
+                              <h4 className="font-bold text-base sm:text-lg truncate text-text-color">{inspiration.name}</h4>
+                          </div>
+                      </button>
                   ))}
               </div>
           </div>

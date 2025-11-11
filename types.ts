@@ -7,13 +7,13 @@ export interface Furniture {
 }
 
 export interface ImageBase64 {
-  data: string;
+  data: string | null;
   mimeType: string;
 }
 
 export interface Iteration {
     prompt: string;
-    imageUrl: string;
+    imageUrl: string | null;
     imageBase64: ImageBase64 | null; // Can be null for archived projects
     description?: string;
     color_palette?: string[];
@@ -31,16 +31,16 @@ export interface StyleVariation {
   description: string;
   color_palette: string[];
   furniture_recommendations: Furniture[];
-  imageUrl: string;
+  imageUrl: string | null;
   imageBase64: ImageBase64 | null; // Can be null for archived projects
   iterations: Iteration[];
-  comments: Comment[];
+  comments: Comment[]; // Added comments to StyleVariation
 }
 
 export interface Project {
   id: string;
   name: string;
-  originalImage: string; // This will now store the full data: URL for persistence
+  originalImage: string | null; // This will now store the full data: URL for persistence
   originalImageBase64: ImageBase64 | null; // Can be null for archived projects
   analysis: string;
   styleVariations: StyleVariation[];
@@ -55,6 +55,22 @@ export interface FavoriteDesign {
   styleVariation: StyleVariation;
 }
 
-export type AppView = 'upload' | 'project' | 'archive' | 'favorites';
+export type AppView = 'upload' | 'project' | 'archive' | 'favorites' | 'diary';
 
 export const ALL_STYLES = ['Moderno', 'Nórdico', 'Clásico', 'Bohemio', 'Industrial', 'Rústico'];
+
+// --- Chatbot Types for Search Grounding ---
+export interface GroundingUrl {
+  uri: string;
+  title: string;
+}
+
+export interface ChatMessagePart {
+  text?: string;
+  groundingUrls?: GroundingUrl[]; // Array of objects
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  parts: ChatMessagePart[];
+}

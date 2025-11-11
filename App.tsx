@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { Project, StyleVariation, AppView, ImageBase64, Iteration, FavoriteDesign, Furniture, Comment, ALL_STYLES } from './types';
+import { Project, StyleVariation, AppView, ImageBase64, Iteration, FavoriteDesign, Furniture, Comment, ALL_STYLES, ChatMessage } from './types';
 import Navigation from './components/Header';
 import ImageUpload from './components/ImageUpload';
 import ProjectView from './components/ProjectView';
@@ -9,14 +9,18 @@ import FavoritesView from './components/FavoritesView';
 import Tutorial from './components/Tutorial';
 import { Modal } from './components/Modal';
 import { ConfirmationDialog } from './components/ConfirmationDialog';
-import { analyzeImage, generateInitialDesignsStream, refineDesign, generateStoryParagraph, regenerateStoryParagraph } from './services/geminiService';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
-import { ErrorIcon, HeartIcon, ShareIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, KissIcon, SparklesIcon, MagicBookIcon, ViewIcon, DreamHeartIcon, MagicWandIcon, StarDustIcon, StarDiamondIcon } from './components/icons/Icons';
-import { initialSeedData } from './seedData'; 
+import { analyzeImageDetailed, generateSingleStyleVariation, refineDesign, generateStoryParagraph, regenerateStoryParagraph, chatWithGemini } from './services/geminiService';
+import { ErrorIcon, HeartIcon, ShareIcon, ClipboardIcon, ChevronLeftIcon, ChevronRightIcon, KissIcon, SparklesIcon, MagicBookIcon, ViewIcon, DreamHeartIcon, MagicWandIcon, StarDustIcon, StarDiamondIcon, ChatIcon, CloseIcon } from './components/icons/Icons';
+// FIX: Se actualizan las importaciones para que coincidan con las exportaciones corregidas en seedData.ts
+import { initialSeedData, trendingDesignImages, REFLECTIVE_PHRASES, MOTIVATION_PHRASES } from './seedData';
 import RefineTutorial from './components/RefineTutorial';
-import { StoryModal } from './components/StoryModal'; 
-import ReactDOM from 'react-dom'; // Import ReactDOM as a module, not from 'react-dom/client' for portal usage
-import MobileMenu from './components/MobileMenu'; // Import MobileMenu
+import { StoryModal } from './components/StoryModal';
+import ReactDOM from 'react-dom';
+import MobileMenu from './components/MobileMenu';
+import Chatbot from './components/Chatbot';
+import ImageWithFallback from './components/ImageWithFallback';
+import DiaryView from './components/DiaryView';
+import MotivationMessage from './components/MotivationMessage'; // Nuevo componente
 
 // --- State Persistence & Types ---
 interface AppState {
@@ -59,7 +63,7 @@ const MAGIC_PHRASES = [
     "Tu visión, el blueprint de la belleza.",
     "La estética es el lenguaje de tu espíritu.",
     "Un espacio transformado, un corazón inspirado.",
-    "Donde la creatividad no tiene límites, Rosi, tu estilo es eterno.",
+    "Donde la creatividad no tiene límites, tu estilo es eterno.", // Ajustado para Rosi es usuaria
     "Cada rincón cuenta una historia. ¿Cuál será la tuya hoy?",
     "Más allá de la decoración, la creación de tu santuario.",
     "Un suspiro de diseño, un mundo de posibilidades.",
@@ -77,781 +81,768 @@ const MAGIC_PHRASES = [
     "Un refugio que cuenta tu historia."
 ];
 
-const FUNNY_TENDER_PHRASES = [
-  "Rosi, tu buen gusto es tan contagioso que hasta los muebles quieren bailar.",
-  "No eres diseñadora, eres una hada madrina de los espacios. ¡Abracadabra!",
-  "¡Atención, mundo! Rosi está creando algo increíble. Agárrense fuerte.",
-  "Tu sonrisa es el mejor accesorio para cualquier habitación. ¡No la olvides!",
-  "Si la creatividad fuera un superpoder, tú serías la heroína del diseño.",
-  "Que cada día esté tan lleno de color y alegría como los diseños que creas.",
-  "Recuerda: los errores son solo oportunidades para un diseño aún más fabuloso.",
-  "La vida es un lienzo en blanco. ¡Píntalo con los colores de tu felicidad, Rosi!",
-  "Siempre hay espacio para un poco más de magia y mucho más diseño.",
-  "Eres la musa de tu propio hogar, ¡déjate llevar por tu inspiración!",
-  "Que tus espacios te abracen con la misma calidez que tú pones en ellos.",
-  "Un beso de inspiración para cada idea que florezca en tu mente.",
-  "Tu toque es único. No hay dos espacios como los que tú creas.",
-  "Sigue ese instinto mágico, él te guiará hacia diseños espectaculares.",
-  "Con cada diseño, estás creando un pedacito más de tu felicidad.",
-  "El universo te sonríe, Rosi, y tus diseños lo demuestran.",
-  "Tu creatividad brilla más que mil constelaciones. ¡Deja que tu visión diseñe!",
-  "Si tu espacio pudiera hablar, diría: '¡Tienes un gusto increíble!'",
-  "No hay desafío que tu ingenio y este universo de sueños no pueden transformar. ¡A diseñar!",
-  "Rosi, recuerda: cada idea tuya es el comienzo de una obra maestra.",
-  "La vida es demasiado corta para espacios sin magia. ¡Ponle tu chispa!",
-  "Tu imaginación es la clave. Este universo solo es la herramienta que te ayuda a manifestarla.",
-  "¡Prepárate! Tu buen gusto está a punto de dejar una huella imborrable en tu espacio.",
-  "Eres la arquitecta de tus propios milagros de diseño. ¡Adelante!",
-  "Que tu día sea tan brillante como el espacio que estás a punto de crear.",
-  "El secreto de un espacio feliz está en tu visión... y en tu sonrisa.",
-  "Tu chispa creativa es el mejor tesoro de Rosi Decora.",
-  "Que cada diseño te recuerde lo increíble que eres.",
-    "Eres la estrella que ilumina cada rincón de tu hogar.",
-  "Con un clic, transformas el mundo, Rosi.",
-  "Tu visión es un regalo para el diseño. ¡Compártela!",
-  "Que la inspiración te susurre dulces ideas al oído.",
-  "Cada diseño es un abrazo de tu corazón a tu espacio.",
-  "Tu creatividad es infinita, como un cielo estrellado.",
-  "Rosi, tu buen gusto es una obra de arte en sí mismo.",
-  "Deja que tu magia fluya y cree espacios que te hagan soñar.",
-  "Tu pasión por el diseño es el motor de este universo.",
-  "Que la alegría de crear te acompañe siempre, Rosi.",
-    "Eres la dueña de tus sueños y la arquitecta de tu felicidad.",
-  "Tu ingenio es el ingrediente secreto de cada diseño exitoso.",
-  "Tu espacio es tu lienzo, y tú eres la artista más talentosa.",
-  "Cada día es una nueva oportunidad para diseñar tu felicidad.",
-  "El encanto de tu hogar comienza con un pensamiento tuyo.",
-  "No hay límites para la belleza que puedes crear, Rosi.",
-  "Que tu corazón guíe cada pincelada de diseño.",
-  "Eres la esencia de la belleza en cada espacio.",
-  "Tu visión es un faro de inspiración para todos.",
-  "Con cada diseño, siembras alegría en tu hogar."
+const PHILOSOPHICAL_PHRASES = [
+  "El espacio no es un vacío, sino un lienzo de posibilidades, esperando tu esencia.",
+  "Cada diseño es un diálogo entre la materia y el espíritu, una forma de habitar el sueño.",
+  "La belleza no reside en lo perfecto, sino en la armonía que tu corazón percibe.",
+  "Un hogar es donde el alma encuentra su eco, un reflejo de la historia que anhelas contar.",
+  "Diseñar es esculpir la luz, dar forma al silencio y pintar con la emoción del instante.",
+  "No creamos espacios, creamos atmósferas; ecos visuales de la vida que se desea vivir.",
+  "La arquitectura del alma se revela en la elección de cada color, cada textura, cada forma.",
+  "En la simplicidad reside la elegancia, en la autenticidad, la verdadera belleza.",
+  "Deja que tu espacio respire, que cada rincón cuente una historia de paz y pertenencia.",
+  "El diseño es el puente invisible que conecta tu interior con el mundo exterior.",
+  "Descubre el universo en cada detalle, la infinita posibilidad en lo ordinario.",
+    "Tu entorno es una extensión de tu ser; adórnalo con la verdad de tu corazón.",
+    "Más allá de la estética, la funcionalidad abraza el bienestar del alma.",
+    "Cada objeto tiene un propósito, una voz silenciosa que contribuye a la sinfonía de tu hogar.",
+    "La transformación de un espacio es la evolución de un espíritu. ¡Atrévete a florecer!",
+    "El diseño es una meditación activa, una búsqueda consciente de la serenidad visual.",
+    "La forma sigue a la emoción, creando santuarios donde el alma puede prosperar.",
+    "Cierra los ojos y visualiza tu paz; abre los ojos y diseña el camino hacia ella.",
+    "Un espacio diseñado con amor es un abrazo constante para quienes lo habitan.",
+    "La creatividad es el pincel, tu hogar el lienzo."
 ];
 
-const YERSON_PHRASES = [
-  "Rosi, tu creatividad es el puente entre lo que sueñas y lo que diseñas. ¡Siempre adelante!",
-  "Cada espacio cuenta una historia, y tú, Rosi, eres la narradora más brillante.",
-  "El diseño no es solo lo que ves, sino lo que sientes. ¡Inspira emociones!",
-  "Que tu hogar sea un reflejo de la belleza que llevas dentro, Rosi.",
-  "La armonía en el diseño se encuentra en la esencia de tu ser.",
-  "Recuerda, Rosi, los pequeños detalles crean grandes universos en tus espacios.",
-  "Transformar es crear, y crear es amar. Ama cada rincón que diseñas.",
-  "Tu visión es la brújula que guía cada trazo de tu creatividad. ¡Confía en ella!",
-  "Con cada idea, Rosi, estás construyendo un futuro más hermoso para tu espacio.",
-  "El verdadero arte del diseño reside en hacer que lo imposible parezca sencillo. ¡Tú lo logras!",
-  "La inspiración es un soplo del universo, y tú, Rosi, la has capturado.",
-  "Que cada diseño sea un paso más hacia el hogar de tus sueños.",
-  "El secreto de la felicidad está en el espacio que te rodea. ¡Diseña para ser feliz!",
-  "Tu imaginación es ilimitada, como el cielo estrellado que ilumina tu noche.",
-  "Deja que tu corazón pinte el canvas de tu hogar con alegría y color.",
-  "En cada rincón, una oportunidad para expresar tu esencia. ¡Atrévete a brillar!",
-  "Los espacios que diseñas son el eco de tu alma, Rosi. Haz que resuene amor.",
-  "Que la luz de tus ideas transforme cada sombra en una obra de arte.",
-  "Tu buen gusto es un don. Compártelo con el mundo a través de tus creaciones.",
-  "Rosi, en tus manos, cada habitación se convierte en un poema visual.",
-];
-
-const DESIGN_HOROSCOPE_MESSAGES = [
-  "Hoy, los astros alinean tu intuición para el color. ¡Experimenta con tonos audaces!",
-  "La energía cósmica favorece la reorganización. ¡Despeja y encuentra un nuevo flujo en tu espacio!",
-  "Es un día propicio para la comodidad. ¡Invierte en textiles suaves y cojines acogedores!",
-  "Tu creatividad está en su punto máximo. ¡Deja que un detalle artístico eleve tu diseño!",
-  "Las influencias planetarias sugieren un toque natural. ¡Añade plantas o elementos orgánicos!",
-  "Busca la simetría hoy. ¡El equilibrio traerá paz a tu rincón!",
-  "Un día perfecto para la reflexión y la luz. ¡Considera una nueva iluminación o un espejo estratégico!",
-  "La conjunción de Mercurio y Venus impulsa la funcionalidad. ¡Piensa en soluciones inteligentes de almacenamiento!",
-  "Tu horóscopo te invita a la calidez. ¡Unas velas o una manta extra serán perfectas!",
-  "Hoy es el día para lo inesperado. ¡Introduce un elemento sorpresa que rompa la monotonía!",
-  "Marte impulsa la acción: Es el momento de finalizar ese proyecto que tienes en mente.",
-  "La luna en tu signo favorece la introspección: Dedica tiempo a visualizar tu espacio ideal.",
-  "Júpiter te sonríe: Una nueva adquisición traerá alegría y un toque de lujo a tu hogar.",
-  "Saturno te aconseja paciencia: No todas las transformaciones ocurren de la noche a la mañana, disfruta el proceso.",
-  "Venus, la diosa del amor, te inspira: Crea un espacio que irradie amor y bienvenida para ti y tus seres queridos.",
-  "El sol te recarga: Aprovecha la luz natural al máximo; abre ventanas y despeja cortinas.",
-  "Urano trae la originalidad: No temas ser diferente, tu estilo único es tu mayor fortaleza.",
-  "Neptuno te invita a soñar: Integra elementos que te transporten, como arte mural o sonidos relajantes.",
-  "Plutón renueva: Es un buen momento para despojarte de lo viejo y dar la bienvenida a lo nuevo y transformador.",
-  "Mercurio en armonía: La comunicación fluye, pide opiniones a tus seres queridos sobre tus ideas de diseño.",
-];
-
-const INITIAL_DIARY_GREETING_PHRASE = "¡Bienvenida a tu Universo de Sueños, Rosi! Un espacio creado con la magia de Yerson, para que cada rincón hable de ti y de tus anhelos.";
-
-// --- Helper Functions ---
-const loadFromStorage = <T,>(key: string, fallback: T): T => {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
-  } catch (error) {
-    console.error(`Error loading state from ${key}`, error);
-    return fallback;
-  }
-};
-
-const saveToStorage = <T,>(key: string, state: T): void => {
-  try {
-    localStorage.setItem(key, JSON.stringify(state));
-  } catch (error) {
-    console.error(`Error saving state to ${key}`, error);
-  }
-};
-
-// --- Main App Component ---
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>(() =>
-    loadFromStorage('rosi-decora-app-state', initialAppState)
-  );
-  const [projects, setProjects] = useState<Project[]>(() =>
-    loadFromStorage('rosi-decora-projects', initialSeedData.projects)
-  );
-  const [favorites, setFavorites] = useState<FavoriteDesign[]>(() =>
-    loadFromStorage('rosi-decora-favorites', initialSeedData.favorites)
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingDesigns, setIsGeneratingDesigns] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showTutorial, setShowTutorial] = useState(false); // Changed default to false
-  const [showRefineTutorial, setShowRefineTutorial] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationAction, setConfirmationAction] = useState<(() => void) | null>(null);
-  const [confirmationMessage, setConfirmationMessage] = useState('');
-  const [confirmationTitle, setConfirmationTitle] = useState('');
-  const [currentMagicPhrase, setCurrentMagicPhrase] = useState('');
-  const [currentFunnyPhrase, setCurrentFunnyPhrase] = useState('');
-  const [currentRefineStyleName, setCurrentRefineStyleName] = useState<string | undefined>(undefined);
-  const [initialProjectActiveTab, setInitialProjectActiveTab] = useState<string | undefined>(undefined);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // New states for Yerson's quote and design horoscope
-  const [yersonQuote, setYersonQuote] = useState('');
-  const [yersonQuoteTimestamp, setYersonQuoteTimestamp] = useState('');
-  const [designHoroscope, setDesignHoroscope] = useState('');
-
-
-  // Story modal states
-  const [showStoryModal, setShowStoryModal] = useState(false);
-  const [currentStory, setCurrentStory] = useState('');
-  const [storyChatHistory, setStoryChatHistory] = useState<{ role: string; parts: { text: string }[] }[]>([]);
-  const [currentStoryImageBase64, setCurrentStoryImageBase64] = useState<ImageBase64 | null>(null);
-  const [currentStoryStyleName, setCurrentStoryStyleName] = useState('');
-  const [currentStoryProjectAnalysis, setCurrentStoryProjectAnalysis] = useState('');
-  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
-
-  // Kisses animation states
-  const [showKissAnimation, setShowKissAnimation] = useState(false);
-  const [kissAnimationKey, setKissAnimationKey] = useState(0); // For re-triggering animation
-  const [kissAnimationMessage, setKissAnimationMessage] = useState('');
+    const [appState, setAppState] = useState<AppState>(initialAppState);
+    const [allProjects, setAllProjects] = useState<Project[]>([]);
+    const [favorites, setFavorites] = useState<FavoriteDesign[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [hasSelectedApiKey, setHasSelectedApiKey] = useState(false);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+    const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+    const [isConfirmDeleteFavoriteOpen, setIsConfirmDeleteFavoriteOpen] = useState(false);
+    const [favoriteToDelete, setFavoriteToDelete] = useState<string | null>(null);
+    const [showTutorial, setShowTutorial] = useState(false);
+    const [showRefineTutorial, setShowRefineTutorial] = useState(false); // NEW: State for refine tutorial
+    const [philosophicalPhrase, setPhilosophicalPhrase] = useState('');
+    const [magicPhrase, setMagicPhrase] = useState('');
+    const [currentTrendingImageIndex, setCurrentTrendingImageIndex] = useState(0);
+    const [storyModalOpen, setStoryModalOpen] = useState(false);
+    const [currentStory, setCurrentStory] = useState<string | null>(null);
+    const [selectedStyleForStory, setSelectedStyleForStory] = useState<string | null>(null);
+    const [currentProjectForStory, setCurrentProjectForStory] = useState<Project | null>(null);
+    const [isStoryLoading, setIsStoryLoading] = useState(false);
+    const [storyChatHistory, setStoryChatHistory] = useState<{ role: string; parts: { text: string }[] }[]>([]);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+    const [chatbotHistory, setChatbotHistory] = useState<ChatMessage[]>([]); // Updated type
+    const [isChatbotSending, setIsChatbotSending] = useState(false);
+    const [aspectRatio, setAspectRatio] = useState<'1:1' | '3:4' | '4:3' | '9:16' | '16:9'>('1:1'); // Default aspect ratio
+    const [showBillingDisclaimer, setShowBillingDisclaimer] = useState(false);
+    const [motivationMessage, setMotivationMessage] = useState<string | null>(null); // Nuevo estado para el mensaje de motivación
 
 
-  // Initialize magic phrases, Yerson's quote, and horoscope
-  useEffect(() => {
-    setCurrentMagicPhrase(MAGIC_PHRASES[Math.floor(Math.random() * MAGIC_PHRASES.length)]);
-    setCurrentFunnyPhrase(FUNNY_TENDER_PHRASES[Math.floor(Math.random() * FUNNY_TENDER_PHRASES.length)]);
+    // Store the initial style name and tab label when navigating to ProjectView
+    const initialStyleNameForProjectView = useRef<string | undefined>(undefined);
+    const initialTabLabelForProjectView = useRef<string | undefined>(undefined);
+    
+    // Ref para el proyecto más reciente, útil para actualizaciones de streaming
+    const latestProjectRef = useRef<Project | null>(null);
 
-    const lastUpdateDate = localStorage.getItem('rosi-decora-yerson-horoscope-date');
-    const today = new Date().toDateString();
-
-    if (!lastUpdateDate || lastUpdateDate !== today) {
-      // Generate new quotes/horoscope daily
-      setYersonQuote(YERSON_PHRASES[Math.floor(Math.random() * YERSON_PHRASES.length)]);
-      setYersonQuoteTimestamp(new Date().toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' })); // Full date and time
-      setDesignHoroscope(DESIGN_HOROSCOPE_MESSAGES[Math.floor(Math.random() * DESIGN_HOROSCOPE_MESSAGES.length)]);
-      
-      localStorage.setItem('rosi-decora-yerson-horoscope-date', today);
-      localStorage.setItem('rosi-decora-yerson-quote', yersonQuote);
-      localStorage.setItem('rosi-decora-yerson-quote-timestamp', yersonQuoteTimestamp);
-      localStorage.setItem('rosi-decora-design-horoscope', designHoroscope);
-
-    } else {
-      // Load saved if already updated today
-      setYersonQuote(localStorage.getItem('rosi-decora-yerson-quote') || YERSON_PHRASES[0]);
-      setYersonQuoteTimestamp(localStorage.getItem('rosi-decora-yerson-quote-timestamp') || new Date().toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' }));
-      setDesignHoroscope(localStorage.getItem('rosi-decora-design-horoscope') || DESIGN_HOROSCOPE_MESSAGES[0]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount to set initial daily quotes
-
-  // Save Yerson's quote and horoscope to localStorage whenever they change
-  useEffect(() => {
-    if (yersonQuote) localStorage.setItem('rosi-decora-yerson-quote', yersonQuote);
-    if (yersonQuoteTimestamp) localStorage.setItem('rosi-decora-yerson-quote-timestamp', yersonQuoteTimestamp);
-    if (designHoroscope) localStorage.setItem('rosi-decora-design-horoscope', designHoroscope);
-  }, [yersonQuote, yersonQuoteTimestamp, designHoroscope]);
-
-
-  // Save app state to localStorage whenever it changes
-  useEffect(() => {
-    saveToStorage('rosi-decora-app-state', appState);
-  }, [appState]);
-
-  // Debounced save for projects and favorites
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      saveToStorage('rosi-decora-projects', projects);
-      saveToStorage('rosi-decora-favorites', favorites);
-    }, 500); // Debounce by 500ms
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [projects, favorites]);
-
-
-  // Handle API key selection for Veo models (though not used directly here, it's a guideline)
-  useEffect(() => {
-    const checkApiKey = async () => {
-      // Check if window.aistudio exists before calling its methods
-      if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
-        // You might want to show a modal or alert here,
-        // but as per guidelines, the API key is assumed to be available.
-        // For GenAI models used here, this check might not be strictly necessary
-        // but included to adhere to the rule if Veo models were added.
-      }
-    };
-    checkApiKey();
-  }, []);
-
-  const currentProject = useMemo(() => {
-    return projects.find((p) => p.id === appState.currentProjectId);
-  }, [appState.currentProjectId, projects]);
-
-  const goToView = useCallback((view: AppView, projectId: string | null = null, initialStyleName?: string, initialTabLabel?: string) => {
-    setAppState({ view, currentProjectId: projectId });
-    // Reset currentRefineStyleName when navigating to a new project or view
-    setCurrentRefineStyleName(initialStyleName);
-    setInitialProjectActiveTab(initialTabLabel); // Set the initial tab for ProjectView
-    setError(null);
-    setIsMobileMenuOpen(false); // Close mobile menu on navigation
-  }, []);
-
-  const handleImageUpload = async (file: File) => {
-    setError(null);
-    setIsLoading(true);
-    setIsGeneratingDesigns(true); // Start generating designs immediately
-
-    let newProjectId: string | null = null; 
-
-    try {
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          resolve(result.split(',')[1]); // Get base64 content
+    // Simulated API Key check for Veo models
+    useEffect(() => {
+        const checkApiKey = async () => {
+            // Only relevant if we were using Veo models that require user key selection
+            // if (window.aistudio && await window.aistudio.hasSelectedApiKey()) {
+            //     setHasSelectedApiKey(true);
+            // } else {
+            //     // Prompt user to select an API key if needed for specific models
+            //     // For now, assume API_KEY is always available from environment
+            //     setHasSelectedApiKey(true);
+            // }
+            setHasSelectedApiKey(true); // Assume API key is available for current models
         };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+        checkApiKey();
+    }, []);
 
-      const mimeType = file.type;
+    // Loader phrase & image rotation effect
+    useEffect(() => {
+        let phraseInterval: number | undefined;
+        let imageInterval: number | undefined;
 
-      // 1. Analyze image
-      const analysisResult = await analyzeImage(base64Data, mimeType);
+        if (isLoading) {
+            const updatePhrases = () => {
+                const randomPhilosophical = PHILOSOPHICAL_PHRASES[Math.floor(Math.random() * PHILOSOPHICAL_PHRASES.length)];
+                setPhilosophicalPhrase(randomPhilosophical);
 
-      newProjectId = `project-${Date.now()}`;
-      const newProject: Project = {
-        id: newProjectId,
-        name: `Mi Rincón Mágico ${projects.length + 1}`,
-        originalImage: `data:${mimeType};base64,${base64Data}`,
-        originalImageBase64: { data: base64Data, mimeType },
-        analysis: analysisResult,
-        styleVariations: [],
-        createdAt: new Date().toISOString(),
-      };
+                const randomMagic = MAGIC_PHRASES[Math.floor(Math.random() * MAGIC_PHRASES.length)];
+                setMagicPhrase(randomMagic);
+            };
 
-      // Add to projects immediately so the UI can start rendering the project view
-      setProjects((prev) => [newProject, ...prev]);
-      goToView('project', newProjectId);
+            // Initial call to set phrases immediately
+            updatePhrases();
 
-      // 2. Generate initial designs in a stream
-      const generatedVariations: StyleVariation[] = [];
-      for await (const variation of generateInitialDesignsStream(base64Data, mimeType)) {
-        generatedVariations.push(variation);
-        setProjects((prevProjects) =>
-          prevProjects.map((p) =>
-            p.id === newProjectId
-              ? { ...p, styleVariations: [...p.styleVariations, variation] }
-              : p
-          )
-        );
-      }
-      setCurrentMagicPhrase(MAGIC_PHRASES[Math.floor(Math.random() * MAGIC_PHRASES.length)]);
+            // Set intervals
+            // FIX: Explicitly use window.setInterval to ensure `number` return type
+            phraseInterval = window.setInterval(updatePhrases, 3000); // Update phrases every 3 seconds
+            // FIX: Explicitly use window.setInterval to ensure `number` return type
+            imageInterval = window.setInterval(() => {
+                setCurrentTrendingImageIndex(prevIndex => (prevIndex + 1) % trendingDesignImages.length);
+            }, 3000); // Rotate image every 3 seconds
 
-      // Add the initial greeting comment to the first variation
-      if (generatedVariations.length > 0) {
-        setProjects((prevProjects) =>
-          prevProjects.map((p) => {
-            if (p.id === newProjectId) {
-              const updatedVariations = p.styleVariations.map((v) => {
-                if (v.style_name === generatedVariations[0].style_name) {
-                  return {
-                    ...v,
-                    comments: [{ id: `comment-${Date.now()}`, text: INITIAL_DIARY_GREETING_PHRASE, createdAt: new Date().toISOString() }],
-                  };
-                }
-                return v;
-              });
-              return { ...p, styleVariations: updatedVariations };
+            // Cleanup function to clear intervals
+            return () => {
+                // FIX: Explicitly use window.clearInterval
+                if (phraseInterval) window.clearInterval(phraseInterval);
+                // FIX: Explicitly use window.clearInterval
+                if (imageInterval) window.clearInterval(imageInterval);
+            };
+        }
+    }, [isLoading]); // Dependency on isLoading
+
+    // State persistence
+    useEffect(() => {
+        // Load state from localStorage
+        const savedAppState = localStorage.getItem('rosi-decora-app-state');
+        if (savedAppState) {
+            setAppState(JSON.parse(savedAppState));
+        }
+
+        const savedProjects = localStorage.getItem('rosi-decora-projects');
+        if (savedProjects) {
+            const parsedProjects = JSON.parse(savedProjects);
+            setAllProjects(parsedProjects);
+            // Initialize latestProjectRef if projects are loaded
+            if (parsedProjects.length > 0) {
+                latestProjectRef.current = parsedProjects.reduce((latest: Project, current: Project) =>
+                    new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+                );
             }
-            return p;
-          })
-        );
-      }
-
-    } catch (err: any) {
-      console.error('Error durante la carga y análisis:', err);
-      // If the error message is a string starting with "QUOTA_EXCEEDED:", it's a special error
-      if (err.message && err.message.startsWith("QUOTA_EXCEEDED:")) {
-        setError(err.message);
-      } else {
-        setError("¡Oh, no! La magia no pudo fluir esta vez. ¿Intentamos de nuevo?");
-      }
-      if (newProjectId) { 
-        setProjects((prev) => prev.filter(p => p.id !== newProjectId)); // Remove partially created project
-      }
-      goToView('upload');
-    } finally {
-      setIsLoading(false);
-      setIsGeneratingDesigns(false);
-    }
-  };
-
-  const handleRefineDesign = async (projectToRefine: Project, styleName: string, prompt: string) => {
-    setError(null);
-    setIsLoading(true);
-    setCurrentRefineStyleName(styleName); // Keep track of the style being refined
-
-    try {
-      const styleToRefine = projectToRefine.styleVariations.find((s) => s.style_name === styleName);
-      if (!styleToRefine || !styleToRefine.imageBase64) {
-        throw new Error('Estilo o imagen base no encontrada para refinar.');
-      }
-
-      const { newImage, newDetails } = await refineDesign(
-        styleToRefine.imageBase64.data,
-        styleToRefine.imageBase64.mimeType,
-        prompt,
-        styleName
-      );
-
-      const newIteration: Iteration = {
-        prompt,
-        imageUrl: `data:${newImage.mimeType};base64,${newImage.data}`,
-        imageBase64: newImage,
-        description: newDetails.description,
-        color_palette: newDetails.color_palette,
-        furniture_recommendations: newDetails.furniture_recommendations,
-      };
-
-      setProjects((prevProjects) =>
-        prevProjects.map((p) =>
-          p.id === projectToRefine.id
-            ? {
-                ...p,
-                styleVariations: p.styleVariations.map((s) =>
-                  s.style_name === styleName
-                    ? { ...s, iterations: [...s.iterations, newIteration] }
-                    : s
-                ),
-              }
-            : p
-        )
-      );
-      setCurrentFunnyPhrase(FUNNY_TENDER_PHRASES[Math.floor(Math.random() * FUNNY_TENDER_PHRASES.length)]);
-    } catch (err: any) {
-      console.error('Error durante el refinamiento:', err);
-      // If the error message is a string starting with "QUOTA_EXCEEDED:", it's a special error
-      if (err.message && err.message.startsWith("QUOTA_EXCEEDED:")) {
-        setError(err.message);
-      } else {
-        setError('¡Rayos! El hechizo de refinamiento no funcionó. ¿Lo intentamos de nuevo con otra idea?');
-      }
-    } finally {
-      setIsLoading(false);
-      setCurrentRefineStyleName(undefined); // Clear refinement state
-      setShowRefineTutorial(false);
-    }
-  };
-
-  const handleRevertDesign = (projectToRevert: Project, styleName: string) => {
-    setProjects((prevProjects) =>
-      prevProjects.map((p) =>
-        p.id === projectToRevert.id
-          ? {
-              ...p,
-              styleVariations: p.styleVariations.map((s) =>
-                s.style_name === styleName
-                  ? { ...s, iterations: s.iterations.slice(0, -1) } // Remove last iteration
-                  : s
-              ),
+        } else {
+            setAllProjects(initialSeedData.projects);
+            if (initialSeedData.projects.length > 0) {
+                latestProjectRef.current = initialSeedData.projects.reduce((latest: Project, current: Project) =>
+                    new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+                );
             }
-          : p
-        )
-    );
-  };
+        }
 
-  const handleDeleteProject = (projectId: string) => {
-    setConfirmationTitle('¿Dejar ir esta inspiración?');
-    setConfirmationMessage('Si la dejas ir, desaparecerá para siempre de tu galería. ¿Estás segura?');
-    setConfirmationAction(() => () => {
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      setFavorites((prev) => prev.filter((f) => f.projectId !== projectId)); // Also remove related favorites
-      if (appState.currentProjectId === projectId) {
-        goToView('upload'); // Go back to upload if current project is deleted
-      }
-      setShowConfirmation(false);
-    });
-    setShowConfirmation(true);
-  };
+        const savedFavorites = localStorage.getItem('rosi-decora-favorites');
+        if (savedFavorites) {
+            setFavorites(JSON.parse(savedFavorites));
+        } else {
+            setFavorites(initialSeedData.favorites);
+        }
 
-  const handleFavoriteDesign = (designToFavorite: StyleVariation, projectId: string, projectName: string) => {
-    const favoriteId = `fav-${Date.now()}`;
-    const newFavorite: FavoriteDesign = {
-      id: favoriteId,
-      projectId,
-      projectName,
-      favoritedAt: new Date().toISOString(),
-      styleVariation: designToFavorite,
+        // Show billing disclaimer once per session/visit
+        const hasSeenDisclaimer = sessionStorage.getItem('rosi-decora-billing-disclaimer-seen');
+        if (!hasSeenDisclaimer) {
+            setShowBillingDisclaimer(true);
+            sessionStorage.setItem('rosi-decora-billing-disclaimer-seen', 'true'); 
+        }
+
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('rosi-decora-app-state', JSON.stringify(appState));
+    }, [appState]);
+
+    useEffect(() => {
+        localStorage.setItem('rosi-decora-projects', JSON.stringify(allProjects));
+        // Update latestProjectRef whenever allProjects changes
+        if (allProjects.length > 0) {
+            latestProjectRef.current = allProjects.reduce((latest, current) =>
+                new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+            );
+        } else {
+            latestProjectRef.current = null;
+        }
+    }, [allProjects]);
+
+    useEffect(() => {
+        localStorage.setItem('rosi-decora-favorites', JSON.stringify(favorites));
+    }, [favorites]);
+
+    // Error handling
+    const handleError = (error: any) => {
+        console.error("Global error caught:", error);
+        let msg = "Un hechizo inesperado ha interrumpido la magia. Por favor, inténtalo de nuevo.";
+        if (error instanceof Error) {
+            msg = error.message;
+        } else if (typeof error === 'string') {
+            msg = error;
+        } else if (error.promptFeedback?.blockReason) {
+             msg = `La magia fue bloqueada. Razón: ${error.promptFeedback.blockReason}. Por favor, ¿intentamos con otras palabras o una imagen diferente?`;
+        }
+        setErrorMessage(msg);
+        setIsLoading(false); // Ensure global loader is off if an error occurs
     };
-    setFavorites((prev) => [newFavorite, ...prev]);
-    // Trigger kiss animation with a message
-    triggerKissAnimation();
-  };
 
-  const handleDeleteFavorite = (favoriteId: string) => {
-    setConfirmationTitle('¿Dejar ir esta joya?');
-    setConfirmationMessage('Si la dejas ir, desaparecerá de tus joyas favoritas. ¿Estás segura?');
-    setConfirmationAction(() => () => {
-      setFavorites((prev) => prev.filter((f) => f.id !== favoriteId));
-      setShowConfirmation(false);
-    });
-    setShowConfirmation(true);
-  };
+    // --- Navigation Handlers ---
+    const handleNavigate = useCallback((view: AppView, projectId: string | null = null, initialStyleName?: string, initialTabLabel?: string) => {
+        setAppState({ view, currentProjectId: projectId });
+        initialStyleNameForProjectView.current = initialStyleName;
+        initialTabLabelForProjectView.current = initialTabLabel;
+        setErrorMessage(null); // Clear errors on navigation
+    }, []);
 
-  const handleSaveProjectName = (newName: string) => {
-    if (!appState.currentProjectId) return;
-    setProjects((prev) =>
-      prev.map((p) => (p.id === appState.currentProjectId ? { ...p, name: newName } : p))
-    );
-  };
-  
-  const handleSaveComment = (projectId: string, styleName: string, text: string) => {
-    setProjects(prevProjects =>
-      prevProjects.map(project =>
-        project.id === projectId
-          ? {
-              ...project,
-              styleVariations: project.styleVariations.map(variation =>
-                variation.style_name === styleName
-                  ? {
-                      ...variation,
-                      comments: [
-                        ...variation.comments,
-                        { id: `comment-${Date.now()}`, text, createdAt: new Date().toISOString() },
-                      ],
-                    }
-                  : variation
-              ),
-            }
-          : project
-      )
-    );
-  };
+    // New centralized function to navigate and set project
+    const setProjectAndNavigate = useCallback((projectId: string, initialStyleName?: string, initialTabLabel?: string) => {
+        setAppState({ view: 'project', currentProjectId: projectId });
+        initialStyleNameForProjectView.current = initialStyleName;
+        initialTabLabelForProjectView.current = initialTabLabel;
+        setErrorMessage(null);
+    }, []);
 
-  const handleNavigateToLatestProject = useCallback(() => {
-    if (projects.length > 0) {
-      goToView('project', projects[0].id);
-    } else {
-      goToView('upload');
-    }
-  }, [projects, goToView]);
-
-  const handleDiaryClick = useCallback(() => {
-    if (appState.currentProjectId && currentProject) { // Si hay un proyecto activo
-        goToView('project', appState.currentProjectId, undefined, 'Tu Diario');
-    } else if (projects.length > 0) { // Si hay proyectos pero ninguno activo, ir al más reciente
-        goToView('project', projects[0].id, undefined, 'Tu Diario');
-    } else { // Si no hay proyectos, mostrar el tutorial
+    const handleTutorialClick = useCallback(() => { // Renamed from handleRosiClick
         setShowTutorial(true);
-    }
-  }, [appState.currentProjectId, currentProject, projects, goToView]);
+    }, []);
 
-  const triggerKissAnimation = useCallback(() => {
-    const message = FUNNY_TENDER_PHRASES[Math.floor(Math.random() * FUNNY_TENDER_PHRASES.length)];
-    setKissAnimationMessage(message);
-    setShowKissAnimation(true);
-    setKissAnimationKey(prev => prev + 1); // Increment key to re-trigger animation
+    const handleCloseTutorial = useCallback(() => {
+        setShowTutorial(false);
+    }, []);
 
-    setTimeout(() => {
-      setShowKissAnimation(false);
-      setKissAnimationMessage('');
-    }, 4000); // Animation duration
-  }, []);
+    const handleNavigateToLatestProject = useCallback(() => {
+        if (allProjects.length > 0) {
+            const latestProject = allProjects.reduce((latest, current) =>
+                new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+            );
+            handleNavigate('project', latestProject.id);
+        } else {
+            setErrorMessage("Aún no tienes proyectos. ¡Sube una imagen para empezar tu magia!");
+        }
+    }, [allProjects, handleNavigate]);
 
-  const handleThrowKiss = useCallback(() => {
-    triggerKissAnimation();
-  }, [triggerKissAnimation]);
+    const handleDiaryClick = useCallback(() => {
+        if (allProjects.length > 0) {
+            const latestProject = allProjects.reduce((latest, current) =>
+                new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+            );
+            handleNavigate('diary', latestProject.id);
+        } else {
+            setErrorMessage("Aún no tienes proyectos. ¡Sube una imagen para empezar a escribir tu diario!");
+        }
+    }, [allProjects, handleNavigate]);
 
-  const handleGenerateStory = useCallback(async (imageBase64: ImageBase64, styleName: string, projectAnalysis: string) => {
-    setError(null);
-    setIsLoading(true);
-    setIsGeneratingStory(true);
-    setCurrentStoryImageBase64(imageBase64);
-    setCurrentStoryStyleName(styleName);
-    setCurrentStoryProjectAnalysis(projectAnalysis);
-    setStoryChatHistory([]); // Clear chat history for new story
+    const handleOpenChatbot = useCallback(() => {
+        setIsChatbotOpen(true);
+    }, []);
 
-    try {
-      const story = await generateStoryParagraph(imageBase64, styleName, projectAnalysis);
-      setCurrentStory(story);
-      setStoryChatHistory([{ role: 'model', parts: [{ text: story }] }]);
-      setShowStoryModal(true);
-    } catch (err: any) {
-      console.error('Error al generar historia:', err);
-      if (err.message && err.message.startsWith("QUOTA_EXCEEDED:")) {
-        setError(err.message);
-      } else {
-        setError('¡Ups! No pude encontrar un hilo para esta historia. ¿Intentamos con otra inspiración?');
+    const handleCloseChatbot = useCallback(() => {
+        setIsChatbotOpen(false);
+    }, []);
+
+    // --- Project Operations ---
+    const handleImageUpload = useCallback(async (file: File) => {
+        if (!hasSelectedApiKey) {
+            setErrorMessage("Por favor, selecciona tu clave API para continuar.");
+            // if (window.aistudio) {
+            //     await window.aistudio.openSelectKey();
+            //     setHasSelectedApiKey(true); // Assume success for immediate retry or next action
+            // }
+            return;
+        }
+
+        setIsLoading(true); // <--- Sets global loader ON for initial file read & analysis
+        setErrorMessage(null);
+        try {
+            const base64Data = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    resolve(result.split(',')[1]); // Extract base64 part
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+
+            const originalImageBase64: ImageBase64 = { data: base64Data, mimeType: file.type };
+            // Usar analyzeImageDetailed para un análisis más completo
+            const analysis = await analyzeImageDetailed(base64Data, file.type); // <--- API call 1 (blocking)
+            
+            // --- NEW: Dismiss global loader after analysis, before navigating/streaming ---
+            setIsLoading(false); // <--- Dismiss global loader here!
+            // The rest of the `handleImageUpload` should now run without blocking the whole UI.
+
+            const projectId = `project-${Date.now()}`;
+            const projectName = `Mi Inspiración ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+
+            const newProject: Project = {
+                id: projectId,
+                name: projectName,
+                originalImage: `data:${file.type};base64,${base64Data}`,
+                originalImageBase64: originalImageBase64,
+                analysis: analysis,
+                styleVariations: [], // Start with empty variations
+                createdAt: new Date().toISOString(),
+            };
+
+            // Set the new project and navigate to it immediately
+            // Ensure project.styleVariations is an array, potentially empty for now
+            setAllProjects(prev => {
+                const updatedProjects = [newProject, ...prev];
+                latestProjectRef.current = newProject; // Update ref immediately
+                return updatedProjects;
+            });
+            setProjectAndNavigate(projectId); // <--- Navigates to ProjectView, which will show skeletons
+
+            // NO INICIAR STREAMING AUTOMÁTICAMENTE AQUÍ
+            
+        } catch (error) {
+            // If an error happens during analysis (before setIsLoading(false)), it will still show on the full-screen loader.
+            // If an error happens during streaming, it will show on the ProjectView.
+            handleError(error);
+        }
+    }, [hasSelectedApiKey, setProjectAndNavigate, aspectRatio]);
+
+    // Nueva función para generar el siguiente estilo
+    const handleGenerateNextStyle = useCallback(async (projectId: string) => {
+        setErrorMessage(null);
+        setIsLoading(true); // Activar el loader global temporalmente para la generación del estilo
+
+        try {
+            const projectToUpdate = allProjects.find(p => p.id === projectId);
+            if (!projectToUpdate || !projectToUpdate.originalImageBase64?.data) {
+                throw new Error("Proyecto no encontrado o imagen original no disponible.");
+            }
+
+            const currentStyles = projectToUpdate.styleVariations.map(sv => sv.style_name);
+            const nextStyleToGenerate = ALL_STYLES.find(styleName => !currentStyles.includes(styleName));
+
+            if (!nextStyleToGenerate) {
+                console.warn("Todos los estilos ya han sido generados para este proyecto.");
+                return; // Todos los estilos ya están generados
+            }
+
+            const newVariation = await generateSingleStyleVariation(
+                projectToUpdate.originalImageBase64.data,
+                projectToUpdate.originalImageBase64.mimeType,
+                nextStyleToGenerate,
+                aspectRatio
+            );
+
+            setAllProjects(prevProjects =>
+                prevProjects.map(p =>
+                    p.id === projectId
+                        ? { ...p, styleVariations: [...p.styleVariations, newVariation] }
+                        : p
+                )
+            );
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsLoading(false); // Desactivar el loader global
+        }
+    }, [allProjects, aspectRatio]);
+
+    // Nuevo: Función para generar refinamientos (solo API call, no modifica el estado)
+    const handleGenerateRefinement = useCallback(async (base64Data: string, mimeType: string, prompt: string, styleName: string) => {
+        setErrorMessage(null); // Clear errors for new attempt
+        try {
+            // Call geminiService.refineDesign directly
+            const result = await refineDesign(base64Data, mimeType, prompt, styleName);
+            return result; // Return the generated image and details
+        } catch (error) {
+            handleError(error); // This will show a global error. RefinementPanel needs to catch this
+            throw error; // Re-throw to allow RefinementPanel to handle its own loading/error state
+        }
+    }, []);
+
+
+    // Modificado: handleRefine ahora se llama handleCommitRefinement y solo actualiza el estado
+    const handleCommitRefinement = useCallback((projectId: string, styleName: string, prompt: string, generatedImage: ImageBase64, generatedDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'>, currentIterationIndex: number) => {
+        // setIsLoading(true); // Ya no se muestra un loader global, el RefinementPanel maneja su propio loader para el commit
+        setErrorMessage(null);
+        try {
+            const newIteration: Iteration = {
+                prompt: prompt,
+                imageUrl: generatedImage.data ? `data:${generatedImage.mimeType};base64,${generatedImage.data}` : null,
+                imageBase64: generatedImage,
+                description: generatedDetails.description,
+                color_palette: generatedDetails.color_palette,
+                furniture_recommendations: generatedDetails.furniture_recommendations,
+            };
+
+            setAllProjects(prevProjects =>
+                prevProjects.map(p => {
+                    if (p.id === projectId) {
+                        return {
+                            ...p,
+                            styleVariations: p.styleVariations.map(sv => {
+                                if (sv.style_name === styleName) {
+                                    // Truncar historial si se realiza un nuevo refinamiento en una iteración anterior
+                                    // Esto asegura que la acción de "rehacer" no incluya iteraciones que han sido "reemplazadas"
+                                    const iterationsBeforeCurrent = sv.iterations.slice(0, currentIterationIndex + 1);
+                                    return {
+                                        ...sv,
+                                        iterations: [...iterationsBeforeCurrent, newIteration],
+                                    };
+                                }
+                                return sv;
+                            }),
+                        };
+                    }
+                    return p;
+                })
+            );
+        } catch (error) {
+            handleError(error);
+        } finally {
+            // setIsLoading(false); // No se usa loader global aquí
+        }
+    }, []);
+
+    // La función handleRevert ha sido eliminada. La lógica de deshacer/rehacer se manejará con el currentIterationIndex en ProjectView y RefinementPanel.
+
+    const handleSaveProjectName = useCallback((projectId: string, newName: string) => {
+        setAllProjects(prevProjects =>
+            prevProjects.map(p =>
+                p.id === projectId
+                    ? { ...p, name: newName }
+                    : p
+            )
+        );
+    }, []);
+
+    const handleDeleteProject = useCallback((projectId: string) => {
+        setIsConfirmDeleteOpen(true);
+        setProjectToDelete(projectId);
+    }, []);
+
+    const confirmDeleteProject = useCallback(() => {
+        if (projectToDelete) {
+            setAllProjects(prevProjects => prevProjects.filter(p => p.id !== projectToDelete));
+            setFavorites(prevFavorites => prevFavorites.filter(f => f.projectId !== projectToDelete)); // Also remove related favorites
+            setIsConfirmDeleteOpen(false);
+            setProjectToDelete(null);
+            if (appState.currentProjectId === projectToDelete) {
+                setAppState({ view: 'archive', currentProjectId: null });
+            }
+        }
+    }, [projectToDelete, appState.currentProjectId, setAppState]);
+
+    const handleSaveComment = useCallback((projectId: string, styleName: string, text: string) => {
+        setAllProjects(prevProjects =>
+            prevProjects.map(p =>
+                p.id === projectId
+                    ? {
+                        ...p,
+                        styleVariations: p.styleVariations.map(sv =>
+                            sv.style_name === styleName
+                                ? { ...sv, comments: [...sv.comments, { id: `comment-${Date.now()}`, text, createdAt: new Date().toISOString() }] }
+                                : sv
+                        ),
+                    }
+                    : p
+            )
+        );
+    }, []);
+
+    // --- Favorite Operations ---
+    const handleFavorite = useCallback((designToFavorite: StyleVariation, projectId: string, projectName: string) => {
+        const existingFavoriteIndex = favorites.findIndex(
+            fav => fav.projectId === projectId && fav.styleVariation.style_name === designToFavorite.style_name
+        );
+
+        if (existingFavoriteIndex > -1) {
+            setErrorMessage("¡Ya tienes esta joya de diseño en tus favoritos! ✨");
+            return;
+        }
+
+        const newFavorite: FavoriteDesign = {
+            id: `favorite-${Date.now()}`,
+            projectId: projectId,
+            projectName: projectName,
+            favoritedAt: new Date().toISOString(),
+            styleVariation: designToFavorite,
+        };
+        setFavorites(prev => [newFavorite, ...prev]);
+        
+        // Mostrar mensaje de motivación
+        const randomMotivation = MOTIVATION_PHRASES[Math.floor(Math.random() * MOTIVATION_PHRASES.length)];
+        setMotivationMessage(randomMotivation);
+        
+    }, [favorites]);
+
+    const handleDeleteFavorite = useCallback((favoriteId: string) => {
+        setIsConfirmDeleteFavoriteOpen(true);
+        setFavoriteToDelete(favoriteId);
+    }, []);
+
+    const confirmDeleteFavorite = useCallback(() => {
+        if (favoriteToDelete) {
+            setFavorites(prev => prev.filter(f => f.id !== favoriteToDelete));
+            setIsConfirmDeleteFavoriteOpen(false);
+            setFavoriteToDelete(null);
+        }
+    }, [favoriteToDelete]);
+
+    // --- Story Generation ---
+    const handleGenerateStory = useCallback(async (imageBase64: ImageBase64, styleName: string, projectAnalysis: string) => {
+        setIsStoryLoading(true);
+        setStoryModalOpen(true);
+        setStoryChatHistory([]);
+        setCurrentStory(null);
+        setSelectedStyleForStory(styleName); 
+        
+        try {
+            const initialStory = await generateStoryParagraph(imageBase64, styleName, projectAnalysis);
+            setCurrentStory(initialStory);
+            setStoryChatHistory([{ role: 'model', parts: [{ text: initialStory }] }]);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsStoryLoading(false);
+        }
+    }, []);
+
+    const handleRegenerateStory = useCallback(async (userComment: string) => {
+        if (!selectedStyleForStory || !currentProjectForStory || !currentProjectForStory.originalImageBase64) return;
+
+        setIsStoryLoading(true);
+        
+        const newChatHistory = [
+            ...storyChatHistory,
+            { role: 'user', parts: [{ text: userComment }] }
+        ];
+        setStoryChatHistory(newChatHistory);
+
+        try {
+            const regeneratedStory = await regenerateStoryParagraph(
+                newChatHistory,
+                currentProjectForStory.originalImageBase64,
+                selectedStyleForStory, 
+                currentProjectForStory.analysis
+            );
+            setCurrentStory(regeneratedStory);
+            setStoryChatHistory(prev => [...prev, { role: 'model', parts: [{ text: regeneratedStory }] }]);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setIsStoryLoading(false);
+        }
+    }, [storyChatHistory, selectedStyleForStory, currentProjectForStory]);
+
+    // --- Chatbot ---
+    const handleChatbotSendMessage = useCallback(async (message: string) => {
+      setIsChatbotSending(true);
+      const newUserMessage: ChatMessage = { role: 'user', parts: [{ text: message }] };
+      const updatedHistory = [...chatbotHistory, newUserMessage];
+      setChatbotHistory(updatedHistory);
+
+      try {
+        const responseParts = await chatWithGemini(updatedHistory); // Now returns ChatMessagePart[]
+        setChatbotHistory(prev => [...prev, { role: 'model', parts: responseParts }]); // Store the new parts
+      } catch (error) {
+        handleError(error);
+        setChatbotHistory(prev => [...prev, { role: 'model', parts: [{ text: "Lo siento, tu asistente está un poco distraída ahora mismo. Por favor, inténtalo de nuevo." }] }]);
+      } finally {
+        setIsChatbotSending(false);
       }
-    } finally {
-      setIsLoading(false);
-      setIsGeneratingStory(false);
-    }
-  }, []);
+    }, [chatbotHistory]);
 
-  const handleRegenerateStory = useCallback(async (userComment: string) => {
-    setError(null);
-    setIsLoading(true);
-    setIsGeneratingStory(true);
 
-    if (!currentStoryImageBase64 || !currentStoryStyleName || !currentStoryProjectAnalysis) {
-      setError("Faltan datos para regenerar la historia. Por favor, reinicia la generación.");
-      setIsLoading(false);
-      setIsGeneratingStory(false);
-      return;
-    }
+    const currentProject = useMemo(() => {
+        return appState.currentProjectId ? allProjects.find(p => p.id === appState.currentProjectId) : null;
+    }, [appState.currentProjectId, allProjects]);
 
-    const updatedChatHistory = [
-      ...storyChatHistory,
-      { role: 'user', parts: [{ text: userComment }] },
-    ];
-    setStoryChatHistory(updatedChatHistory);
+    // Effect to update currentProjectForStory when currentProject changes
+    useEffect(() => {
+        if (currentProject) {
+            setCurrentProjectForStory(currentProject);
+        }
+    }, [currentProject]);
 
-    try {
-      const newStory = await regenerateStoryParagraph(updatedChatHistory, currentStoryImageBase64, currentStoryStyleName, currentStoryProjectAnalysis);
-      setCurrentStory(newStory);
-      setStoryChatHistory((prev) => [...prev, { role: 'model', parts: [{ text: newStory }] }]);
-    } catch (err: any) {
-      console.error('Error al regenerar historia:', err);
-      if (err.message && err.message.startsWith("QUOTA_EXCEEDED:")) {
-        setError(err.message);
-      } else {
-        setError('¡Ups! La historia se enredó. ¿Probamos con otro comentario?');
-      }
-    } finally {
-      setIsLoading(false);
-      setIsGeneratingStory(false);
-    }
-  }, [storyChatHistory, currentStoryImageBase64, currentStoryStyleName, currentStoryProjectAnalysis]);
+    // Kiss animation
+    const throwKiss = useCallback(() => {
+        const kissAnimationContainer = document.getElementById('kiss-animation-container');
+        if (!kissAnimationContainer) return;
 
-  const closeStoryModal = useCallback(() => {
-    setShowStoryModal(false);
-    setCurrentStory('');
-    setStoryChatHistory([]);
-    setCurrentStoryImageBase64(null);
-    setCurrentStoryStyleName('');
-    setCurrentStoryProjectAnalysis('');
-    setError(null); // Clear any story-related errors when closing modal
-  }, []);
+        const kissElement = document.createElement('div');
+        kissElement.innerHTML = '😘';
+        kissElement.classList.add('kiss-animation'); // Use the CSS class for animation properties
+        
+        // Random starting position near the center bottom (adjusted for actual CSS animation)
+        const startX = Math.random() * (window.innerWidth / 2) + window.innerWidth / 4;
+        kissElement.style.left = `${startX}px`;
 
-  const showLoader = isLoading || isGeneratingDesigns || isGeneratingStory;
+        // Pass random values for more varied animations
+        kissElement.style.setProperty('--random-x', Math.random().toString());
+        kissElement.style.setProperty('--random-y', Math.random().toString());
+        kissElement.style.setProperty('--random-duration', Math.random().toString());
+        kissElement.style.setProperty('--delay', `${Math.random() * 0.5}s`); // Slight delay variation
 
-  const Loader = () => (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fade-in p-4">
-      <div className="gradient-card rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-95 animate-scale-in">
-        <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center mb-6">
-          {isGeneratingDesigns || isGeneratingStory ? (
-             <MagicBookIcon className="w-14 h-14 text-primary-accent animate-pulse-slow" />
-          ) : (
-            <StarDustIcon className="w-14 h-14 text-primary-accent animate-spin-slow" />
-          )}
+        kissAnimationContainer.appendChild(kissElement);
+
+        // Clean up the element after animation ends
+        kissElement.addEventListener('animationend', () => {
+            kissElement.remove();
+        });
+    }, []);
+
+
+    return (
+        <div className="min-h-screen bg-background text-text-color">
+            <Navigation
+                currentView={appState.view}
+                onNavigate={handleNavigate}
+                onTutorialClick={handleTutorialClick} // Renamed prop
+                onThrowKiss={throwKiss}
+                onNavigateToLatestProject={handleNavigateToLatestProject}
+                onDiaryClick={handleDiaryClick}
+                onOpenChatbot={handleOpenChatbot}
+                isMobileMenuOpen={isMobileMenuOpen}
+                onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
+            />
+            <MobileMenu
+                isOpen={isMobileMenuOpen}
+                onClose={() => setIsMobileMenuOpen(false)}
+                onNavigate={handleNavigate}
+                currentView={appState.view}
+                onTutorialClick={handleTutorialClick} // Renamed prop
+                onThrowKiss={throwKiss}
+                onNavigateToLatestProject={handleNavigateToLatestProject}
+                onDiaryClick={handleDiaryClick}
+                onOpenChatbot={handleOpenChatbot}
+            />
+
+            <main className="p-4 sm:p-6 lg:p-8">
+                {isLoading && (
+                    <div className="fixed inset-0 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center z-50 text-center animate-fade-in">
+                        <div className="w-20 h-20 border-8 border-dashed rounded-full animate-spin border-primary-accent mb-6"></div>
+                        <p className="text-3xl font-bold main-title title-gradient mb-4">{magicPhrase}</p>
+                        <p className="text-lg text-text-color-soft italic max-w-md mb-8">{philosophicalPhrase}</p>
+                        {trendingDesignImages.length > 0 && (
+                            <div className="w-64 h-40 overflow-hidden rounded-xl shadow-xl">
+                                <ImageWithFallback
+                                    src={trendingDesignImages[currentTrendingImageIndex].image.data
+                                        ? `data:${trendingDesignImages[currentTrendingImageIndex].image.mimeType};base64,${trendingDesignImages[currentTrendingImageIndex].image.data}`
+                                        : null}
+                                    alt="Inspiración de diseño"
+                                    className="w-full h-full object-cover animate-fade-in-out"
+                                    fallbackIconClassName="w-1/2 h-1/2"
+                                    loading="eager"
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {errorMessage && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 flex items-center gap-2 error-message-card" role="alert">
+                        <ErrorIcon className="w-5 h-5 flex-shrink-0" />
+                        <span className="block sm:inline">{errorMessage}</span>
+                        <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-700 hover:text-red-900" aria-label="Cerrar alerta de error">
+                            <CloseIcon className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
+
+                {showTutorial && <Tutorial onClose={handleCloseTutorial} />}
+                {/* RefineTutorial ahora se gestiona desde ProjectView/RefinementPanel */}
+                {/* {showRefineTutorial && <RefineTutorial onClose={() => setShowRefineTutorial(false)} />} */}
+                {storyModalOpen && currentStory && selectedStyleForStory && currentProjectForStory && (
+                    <StoryModal
+                        isOpen={storyModalOpen}
+                        onClose={() => setStoryModalOpen(false)}
+                        story={currentStory}
+                        storyStyleName={selectedStyleForStory}
+                        chatHistory={storyChatHistory}
+                        onRegenerate={handleRegenerateStory}
+                        isLoading={isStoryLoading}
+                    />
+                )}
+                {isChatbotOpen && (
+                    <Chatbot
+                        isOpen={isChatbotOpen}
+                        onClose={handleCloseChatbot}
+                        chatHistory={chatbotHistory}
+                        onSendMessage={handleChatbotSendMessage}
+                        isSending={isChatbotSending}
+                    />
+                )}
+                {motivationMessage && (
+                    <MotivationMessage
+                        message={motivationMessage}
+                        onClose={() => setMotivationMessage(null)}
+                    />
+                )}
+
+                {/* Main content is always rendered, isLoading only controls the overlay */}
+                <>
+                    {appState.view === 'upload' && (
+                        <ImageUpload
+                            onImageUpload={handleImageUpload}
+                            recentProjects={allProjects.filter((_, i) => i < 4)} // Show up to 4 recent projects
+                            onViewProject={(id) => handleNavigate('project', id)}
+                            aspectRatio={aspectRatio}
+                            setAspectRatio={setAspectRatio}
+                        />
+                    )}
+                    {appState.view === 'project' && currentProject && (
+                        <ProjectView
+                            project={currentProject}
+                            initialStyleName={initialStyleNameForProjectView.current}
+                            initialActiveTabLabel={initialTabLabelForProjectView.current}
+                            onGenerateRefinement={handleGenerateRefinement} // Nuevo prop
+                            onCommitRefinement={handleCommitRefinement}   // Nuevo prop
+                            onFavorite={handleFavorite}
+                            // onRevert={handleRevert} // Eliminado
+                            onSaveProjectName={(newName) => handleSaveProjectName(currentProject.id, newName)}
+                            onSaveComment={handleSaveComment} // Se pasa a ProjectView
+                            onGenerateStory={handleGenerateStory}
+                            showRefineTutorial={showRefineTutorial} // Pasar estado del tutorial
+                            setShowRefineTutorial={setShowRefineTutorial} // Pasar setter del tutorial
+                            onGenerateNextStyle={handleGenerateNextStyle} // NUEVO: para generar estilos individualmente
+                        />
+                    )}
+                    {appState.view === 'archive' && (
+                        <ArchiveView
+                            projects={allProjects}
+                            onView={(id) => handleNavigate('project', id)}
+                            onDelete={handleDeleteProject}
+                        />
+                    )}
+                    {appState.view === 'favorites' && (
+                        <FavoritesView
+                            favorites={favorites}
+                            onView={(projectId, styleName) => handleNavigate('project', projectId, styleName)}
+                            onDelete={handleDeleteFavorite}
+                            onNavigateToUpload={() => handleNavigate('upload')}
+                        />
+                    )}
+                    {appState.view === 'diary' && currentProject && (
+                        <DiaryView
+                            project={currentProject}
+                            onNavigateBack={() => handleNavigate('project', currentProject.id)}
+                            onSaveComment={handleSaveComment} // Se pasa a DiaryView
+                        />
+                    )}
+                </>
+            </main>
+
+            <ConfirmationDialog
+                isOpen={isConfirmDeleteOpen}
+                onClose={() => setIsConfirmDeleteOpen(false)}
+                onConfirm={confirmDeleteProject}
+                title="¿Estás segura?"
+                message="Esta inspiración se desvanecerá para siempre. ¿Quieres continuar?"
+            />
+            <ConfirmationDialog
+                isOpen={isConfirmDeleteFavoriteOpen}
+                onClose={() => setIsConfirmDeleteFavoriteOpen(false)}
+                onConfirm={confirmDeleteFavorite}
+                title="¿Dejar go esta joya?"
+                message="Esta joya de diseño se irá de tus favoritos. ¿Quieres continuar?"
+            />
+
+            {showBillingDisclaimer && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-4 rounded-xl bg-gradient-to-r from-primary-accent to-secondary-accent text-white shadow-xl flex items-center gap-4 max-w-lg animate-fade-in" role="alert">
+                    <SparklesIcon className="w-6 h-6 flex-shrink-0" />
+                    <p className="text-sm">
+                        ¡Atención, maga del diseño! Esta aplicación utiliza la API de Google Gemini, lo cual puede generar costos de uso.
+                        Asegúrate de revisar la <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-white/80">documentación de facturación</a> para entender los cargos.
+                    </p>
+                    <button onClick={() => setShowBillingDisclaimer(false)} className="ml-auto p-1 rounded-full hover:bg-white/20 transition-colors" aria-label="Cerrar aviso de facturación">
+                        <CloseIcon className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
         </div>
-        <h3 className="text-3xl font-bold main-title title-gradient mb-4">
-          {isGeneratingDesigns ? '¡Tejiendo Magia para ti!' : (isGeneratingStory ? '¡Tejiendo un Hilo de tu Historia!' : 'Despertando tu Universo...')}
-        </h3>
-        <p className="text-text-color-soft text-lg mb-6 leading-relaxed">
-          {isGeneratingDesigns ? currentMagicPhrase : (isGeneratingStory ? 'Cada palabra, un toque de magia para tu rincón.' : 'Un instante y tu visión cobrará vida.')}
-        </p>
-        <div className="relative pt-1">
-          <div className="overflow-hidden h-3 mb-4 text-xs flex rounded bg-pink-200">
-            <div style={{ width: "100%" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary-accent to-secondary-accent animate-pulse"></div>
-          </div>
-        </div>
-        <p className="text-text-color-soft text-sm">
-          {isGeneratingDesigns ? 'Preparando 6 estilos únicos para tu espacio.' : (isGeneratingStory ? 'Solo un poquito más, tu historia está casi lista.' : 'Solo un poquito más...')}
-        </p>
-      </div>
-    </div>
-  );
-
-  const RefineLoader = () => (
-    <div className="fixed inset-0 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-fade-in p-4">
-      <div className="gradient-card rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl transform scale-95 animate-scale-in">
-        <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center mb-6">
-          <KissIcon className="w-14 h-14 text-purple-600 animate-bounce-slow" />
-        </div>
-        <h3 className="text-3xl font-bold main-title title-gradient mb-4">
-          ¡Un Beso de Inspiración!
-        </h3>
-        <p className="text-text-color-soft text-lg mb-6 leading-relaxed">
-          {currentFunnyPhrase}
-        </p>
-        <div className="relative pt-1">
-          <div className="overflow-hidden h-3 mb-4 text-xs flex rounded bg-purple-200">
-            <div style={{ width: "100%" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
-          </div>
-        </div>
-        <p className="text-text-color-soft text-sm">
-          {isGeneratingStory ? 'Tu historia está tomando forma...' : '¡Tu visión se está transformando!'}
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderKissAnimation = () => {
-    if (!showKissAnimation) return null;
-
-    const kisses = Array.from({ length: 5 }).map((_, i) => {
-      const style = {
-        left: `${Math.random() * 80 + 10}vw`, // Random horizontal position
-        animationDelay: `${Math.random() * 0.5}s`, // Staggered animation
-        transform: `translateX(${Math.random() * 100 - 50}px)`, // Slight horizontal drift
-        fontSize: `${Math.random() * 1.5 + 2}rem`, // Random size
-        color: `hsl(${Math.random() * 360}, 70%, 70%)`, // Random playful color
-      };
-      return (
-        <span key={i} className="kiss-animation absolute" style={style}>
-          💋
-        </span>
-      );
-    });
-
-    const portalContainer = document.getElementById('kiss-animation-container');
-    if (!portalContainer) return null;
-
-    return ReactDOM.createPortal(
-      <div className="kiss-animation-wrapper">
-        <div className="absolute inset-0">
-          {kisses}
-        </div>
-        {kissAnimationMessage && (
-          <h2 className="kiss-message main-title title-gradient">
-            {kissAnimationMessage}
-          </h2>
-        )}
-      </div>,
-      portalContainer
     );
-  };
-
-  return (
-    <div className="min-h-screen bg-background-light text-text-color font-sans relative">
-      <Navigation
-        currentView={appState.view}
-        onNavigate={goToView}
-        onRosiClick={() => setShowTutorial(true)}
-        onThrowKiss={handleThrowKiss}
-        onNavigateToLatestProject={handleNavigateToLatestProject}
-        onDiaryClick={handleDiaryClick} // Pasamos la nueva función
-        isMobileMenuOpen={isMobileMenuOpen}
-        onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
-      />
-
-      <MobileMenu
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        onNavigate={goToView}
-        currentView={appState.view}
-        onRosiClick={() => setShowTutorial(true)}
-        onThrowKiss={handleThrowKiss}
-        onNavigateToLatestProject={handleNavigateToLatestProject}
-        onDiaryClick={handleDiaryClick}
-      />
-
-      <main className="container mx-auto py-8 sm:py-12 px-4">
-        {error && (
-          <div className="gradient-card border border-red-400 bg-red-50 p-4 rounded-xl mb-8 flex items-center shadow-md">
-            <ErrorIcon className="w-7 h-7 text-red-600 mr-3 flex-shrink-0" />
-            <p className="text-red-700 font-medium break-words">
-              {error}
-            </p>
-          </div>
-        )}
-
-        {appState.view === 'upload' && (
-          <ImageUpload onImageUpload={handleImageUpload} recentProjects={projects.slice(0, 4)} onViewProject={(id) => goToView('project', id)} />
-        )}
-        {appState.view === 'project' && currentProject && (
-          <ProjectView
-            project={currentProject}
-            initialStyleName={currentRefineStyleName}
-            onRefine={handleRefineDesign}
-            onFavorite={handleFavoriteDesign}
-            onRevert={handleRevertDesign}
-            onSaveProjectName={handleSaveProjectName}
-            onSaveComment={handleSaveComment}
-            onGenerateStory={handleGenerateStory} 
-            initialActiveTabLabel={initialProjectActiveTab} // Pasamos la prop del tab inicial
-            yersonQuote={yersonQuote}
-            yersonQuoteTimestamp={yersonQuoteTimestamp}
-            designHoroscope={designHoroscope}
-          />
-        )}
-        {appState.view === 'archive' && (
-          <ArchiveView
-            projects={projects}
-            onView={(id) => goToView('project', id)}
-            onDelete={handleDeleteProject}
-          />
-        )}
-        {appState.view === 'favorites' && (
-          <FavoritesView
-            favorites={favorites}
-            onView={(projectId, styleName) => goToView('project', projectId, styleName)}
-            onDelete={handleDeleteFavorite}
-            onNavigateToUpload={() => goToView('upload')}
-          />
-        )}
-      </main>
-
-      {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
-      {showRefineTutorial && <RefineTutorial onClose={() => setShowRefineTutorial(false)} />}
-      {showConfirmation && (
-        <ConfirmationDialog
-          isOpen={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-          onConfirm={confirmationAction || (() => {})}
-          title={confirmationTitle}
-          message={confirmationMessage}
-        />
-      )}
-      {showStoryModal && (
-        <StoryModal
-          isOpen={showStoryModal}
-          onClose={closeStoryModal}
-          story={currentStory}
-          storyStyleName={currentStoryStyleName}
-          chatHistory={storyChatHistory}
-          onRegenerate={handleRegenerateStory}
-          isLoading={isGeneratingStory}
-        />
-      )}
-      {(showLoader || showKissAnimation) && (
-        <>
-          {showLoader && (isLoading && !isGeneratingDesigns && !isGeneratingStory ? <Loader /> : (isLoading && isGeneratingDesigns ? <Loader /> : (isGeneratingStory || currentRefineStyleName ? <RefineLoader /> : null)))}
-          {showKissAnimation && renderKissAnimation()}
-        </>
-      )}
-    </div>
-  );
 };
 
 export default App;

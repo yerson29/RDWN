@@ -1,5 +1,4 @@
 import React from 'react';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { CloseIcon } from './icons/Icons';
 
 interface ModalProps {
@@ -12,7 +11,7 @@ interface ModalProps {
     headerRightContent?: React.ReactNode; // New: Content to display on the right side of the header
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, cardClassName = "gradient-card", titleClassName = "title-gradient", headerRightContent }) => { // Changed default titleClassName to "title-gradient"
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, cardClassName = "gradient-card", titleClassName = "title-gradient", headerRightContent }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 bg-white/80 backdrop-blur-md flex justify-center items-center z-50 animate-fade-in p-4" onClick={onClose} role="dialog" aria-modal="true">

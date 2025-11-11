@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
-import { ChevronLeftIcon, ChevronRightIcon, MagicBookIcon, SparklesIcon, CloseIcon, ViewIcon, DreamHeartIcon } from './icons/Icons'; // Asegúrate de DreamHeartIcon
+import { ChevronLeftIcon, ChevronRightIcon, MagicBookIcon, SparklesIcon, CloseIcon, ViewIcon, DreamHeartIcon, RevertIcon } from './icons/Icons'; // Asegúrate de DreamHeartIcon y RevertIcon
 
 interface RefineTutorialProps {
   onClose: () => void;
@@ -9,23 +8,28 @@ interface RefineTutorialProps {
 const TUTORIAL_STEPS = [
   {
     icon: ViewIcon,
-    title: "Paso 1: ¡Explora Universos de Estilo!",
-    text: "Mira los 5 estilos que tu universo de sueños ha creado para ti. Haz clic en el que más te susurre para seleccionarlo y ver sus detalles. ¡Tu inspiración te guiará!",
+    title: "Paso 1: ¡Explora tus Estilos!",
+    text: "Mira los estilos que tu universo de sueños ha creado. Haz clic en el que más te susurre para seleccionarlo y ver sus detalles. ¡Tu inspiración te guiará!",
   },
   {
     icon: MagicBookIcon,
-    title: "Paso 2: ¡Tu Visión Es el Secreto!",
-    text: "En el panel de la derecha, verás un área para escribir tus ideas. Cuéntale a tu universo qué quieres cambiar o mejorar en el diseño actual. ¡Sé tan detallada como desees!",
+    title: "Paso 2: ¡Tu Visión es el Secreto!",
+    text: "En el panel de la derecha, escribe tus ideas. Cuéntale a tu universo qué cambiar o mejorar en el diseño actual. ¡Sé tan detallada como desees!",
   },
   {
     icon: SparklesIcon,
-    title: "Paso 3: ¡Da Vida a tu Idea!",
-    text: "Una vez que hayas escrito tu magia, haz clic en el botón 'Transformar'. Tu universo de sueños trabajará para crear una nueva versión de tu diseño, incorporando tus susurros. ¡Observa la evolución!",
+    title: "Paso 3: ¡Ve tu Magia antes de Aplicarla!",
+    text: "Después de escribir tu prompt, haz clic en 'Generar Vista Previa'. Verás el nuevo diseño comparado con el anterior. ¡Aquí la magia se muestra antes de ser definitiva!",
   },
   {
     icon: DreamHeartIcon, 
-    title: "Paso 4: Viaja en el Tiempo de tu Inspiración",
-    text: "Usa los pequeños recuadros con imágenes debajo del campo de texto para navegar por todas las versiones de tu diseño. Podrás ver la evolución desde el original hasta tus últimas refinaciones. ¡Cada paso es una joya!",
+    title: "Paso 4: ¡Aplica o Cancela!",
+    text: "Si te encanta la vista previa, haz clic en 'Aplicar Refinamiento' para guardarlo. Si no es lo que esperabas, 'Cancelar' te regresará al diseño anterior para que pruebes nuevas ideas. ¡El control es tuyo!",
+  },
+  {
+    icon: RevertIcon,
+    title: "Paso 5: Viaja en el Tiempo de tu Inspiración",
+    text: "Usa las flechas 'Deshacer' y 'Rehacer' junto al historial de imágenes para navegar por todas las versiones de tu diseño. ¡Cada paso es una joya que puedes visitar cuando quieras!",
   }
 ];
 
@@ -83,7 +87,7 @@ const RefineTutorial: React.FC<RefineTutorialProps> = ({ onClose }) => {
             </button>
             <button 
               onClick={onClose} 
-              className="px-6 py-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-md hover:scale-105 transition-transform"
+              className="px-6 py-3 rounded-xl bg-gray-200 text-text-color font-semibold shadow-md hover:scale-105 transition-transform"
               aria-label="Cerrar tutorial"
             >
               Cerrar

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
-// Se agregaron las importaciones de iconos faltantes desde el archivo de iconos.
 import { BookOpenIcon, SparklesIcon, UserIcon } from './icons/Icons';
 
 interface StoryModalProps {
