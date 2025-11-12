@@ -5,11 +5,11 @@ import { HomeIcon, BookStackIcon, DreamHeartIcon, KissIcon, StarDiamondIcon, Mag
 interface NavigationProps {
   currentView: AppView;
   onNavigate: (view: AppView, projectId?: string | null, initialStyleName?: string, initialTabLabel?: string) => void;
-  onTutorialClick: () => void; // Renamed from onRosiClick
+  onTutorialClick: () => void; 
   onThrowKiss: () => void;
   onNavigateToLatestProject: () => void; 
-  onDiaryClick: () => void; // Nueva prop para el botón "Diario"
-  onOpenChatbot: () => void; // New prop for opening the chatbot
+  onDiaryClick: () => void; 
+  onOpenChatbot: () => void; 
   isMobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
 }
@@ -17,13 +17,13 @@ interface NavigationProps {
 const DesktopNavButton: React.FC<{ icon: React.ReactNode, onClick: () => void, ariaLabel: string, label: string, isActive?: boolean }> = ({ icon, onClick, ariaLabel, label, isActive = false }) => (
     <button 
         onClick={onClick} 
-        className={`nav-pill-button py-2 px-3 ${isActive ? 'is-active' : ''}`}
+        className={`btn-pill-base btn-nav-link ${isActive ? 'is-active' : ''}`}
         aria-label={ariaLabel}
         aria-current={isActive ? 'page' : undefined}
         role="button"
         title={label}
     >
-        {icon}
+        <div className="icon-orb">{icon}</div> {/* Icon within orb */}
         <span>{label}</span>
     </button>
 );
@@ -33,9 +33,9 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate, onTuto
     <>
       <header className="header-gradient-bg shadow-lg p-4 sticky top-0 z-40">
         <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={onTutorialClick} role="button" aria-label="Abrir tutorial de Rosi Decora">
-            <StarDustIcon className="w-10 h-10 text-white" />
-            <h1 className="text-4xl main-title text-white">
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={onTutorialClick} role="button" aria-label="Abrir tutorial de Rosi Decora">
+            <StarDustIcon className="w-8 h-8 text-white animate-sparkle-glow group-hover:scale-110 transition-transform" /> {/* Adjusted icon size */}
+            <h1 className="text-3xl main-title text-white"> {/* Adjusted text size */}
               Rosi Decora
             </h1>
           </div>
@@ -55,7 +55,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate, onTuto
           <div className="lg:hidden flex items-center">
             <button 
               onClick={onToggleMobileMenu} 
-              className="p-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white"
+              className="p-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-white transition-transform transform active:scale-90"
               aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
             >
               {isMobileMenuOpen ? <CloseIcon className="w-8 h-8" /> : <MenuIcon className="w-8 h-8" />}

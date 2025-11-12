@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
 import { BookOpenIcon, SparklesIcon, UserIcon } from './icons/Icons';
+import VoiceInputButton from './VoiceInputButton';
 
 interface StoryModalProps {
   isOpen: boolean;
@@ -25,7 +26,6 @@ export const StoryModal: React.FC<StoryModalProps> = ({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Scroll to the latest message in chat history
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
@@ -54,30 +54,33 @@ export const StoryModal: React.FC<StoryModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <textarea
-            value={userComment}
-            onChange={(e) => setUserComment(e.target.value)}
-            placeholder="¿Cómo quieres que la historia continúe o cambie? Ej: 'Hazlo más misterioso' o 'Agrega un personaje solitario'..."
-            className="w-full p-3 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color focus:ring-2 focus:ring-primary-accent transition"
-            rows={3}
-            disabled={isLoading}
-            aria-label="Introduce tus comentarios para regenerar la historia"
-          ></textarea>
+            <div className="relative w-full">
+                <textarea
+                    value={userComment}
+                    onChange={(e) => setUserComment(e.target.value)}
+                    placeholder="¿Cómo quieres que la historia continúe o cambie? Ej: 'Hazlo más misterioso' o 'Agrega un personaje solitario'..."
+                    className="w-full p-3 pr-12 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color focus:ring-2 focus:ring-primary-accent transition main-title"
+                    rows={3}
+                    disabled={isLoading}
+                    aria-label="Introduce tus comentarios para regenerar la historia"
+                ></textarea>
+                <VoiceInputButton onResult={(text) => setUserComment(prev => prev + text)} />
+            </div>
           <button
             type="submit"
             disabled={!userComment.trim() || isLoading}
-            className="w-full px-6 py-3 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-6 py-3 btn-pill-base btn-main-action disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             aria-label="Regenerar historia con tus comentarios"
           >
             {isLoading ? (
               <>
-                <SparklesIcon className="w-5 h-5 animate-spin" />
-                Tejiendo un Nuevo Capítulo...
+                <div className="icon-orb"><SparklesIcon className="w-5 h-5 animate-spin" /></div>
+                <span>Tejiendo un Nuevo Capítulo...</span>
               </>
             ) : (
               <>
-                <BookOpenIcon className="w-5 h-5" />
-                Regenerar Historia
+                <div className="icon-orb"><BookOpenIcon className="w-5 h-5" /></div>
+                <span>Regenerar Historia</span>
               </>
             )}
           </button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, DocumentIcon, DreamHeartIcon, MagicWandIcon, SparklesIcon, CloseIcon, StarDustIcon } from './icons/Icons';
+import { ChevronLeftIcon, ChevronRightIcon, DocumentIcon, DreamHeartIcon, MagicWandIcon, SparklesIcon, CloseIcon, StarDustIcon, ViewIcon } from './icons/Icons'; // Asegúrate de ViewIcon si lo usas en el tutorial
 
 interface TutorialProps {
   onClose: () => void;
@@ -12,7 +12,7 @@ const TUTORIAL_STEPS = [
     text: "Te invitamos a empezar tu aventura. Sube esa foto especial de tu espacio o captura un nuevo momento con la cámara. ¡Este es el primer trazo de tu obra de arte!",
   },
   {
-    icon: MagicWandIcon,
+    icon: ViewIcon, // Cambiado a ViewIcon para este paso
     title: "Paso 2: ¡Explora Universos de Estilo!",
     text: "Con un toque de magia, tu universo de sueños te revelará 5 estilos únicos para tu rincón. Desliza, sueña y déjate llevar por la inspiración que cada diseño te ofrece. ¡Cada uno tiene un alma esperando a ser descubierto por ti!",
   },
@@ -45,15 +45,15 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
       <div className="gradient-card rounded-3xl max-w-md w-full text-center transform scale-95 animate-scale-in relative p-6 sm:p-8">
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 text-text-color-soft hover:text-text-color transition-colors"
+          className="absolute top-4 right-4 text-text-color-soft hover:text-text-color transition-colors transform hover:scale-110"
           aria-label="Cerrar tutorial"
         >
           <CloseIcon className="w-6 h-6" />
         </button>
 
         <div className="mb-6">
-            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                <currentStep.icon className="w-12 h-12 fill-current text-primary-accent" />
+            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center shadow-md animate-pop-in">
+                <currentStep.icon className="w-12 h-12 fill-current text-primary-accent animate-sparkle-glow" />
             </div>
         </div>
 
@@ -67,7 +67,7 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
 
         <div className="flex justify-center gap-2 mb-8">
             {TUTORIAL_STEPS.map((_, index) => (
-                <div key={index} className={`w-3 h-3 rounded-full transition-colors ${step === index ? 'bg-primary-accent' : 'bg-text-color-soft'}`}></div>
+                <div key={index} className={`w-3 h-3 rounded-full transition-colors ${step === index ? 'bg-primary-accent shadow-md' : 'bg-text-color-soft'}`}></div>
             ))}
         </div>
 
@@ -75,25 +75,25 @@ const Tutorial: React.FC<TutorialProps> = ({ onClose }) => {
             <button 
               onClick={handlePrev} 
               disabled={step === 0}
-              className="px-6 py-3 rounded-xl btn-primary text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-pill-base btn-main-action disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Paso anterior del tutorial"
             >
-              <ChevronLeftIcon className="w-5 h-5"/> Atrás
+              <div className="icon-orb"><ChevronLeftIcon className="w-5 h-5"/></div> <span>Atrás</span>
             </button>
             <button 
               onClick={onClose} 
-              className="px-6 py-3 rounded-xl bg-gray-200 text-text-color font-semibold shadow-md hover:scale-105 transition-transform"
+              className="btn-pill-base btn-secondary-action"
               aria-label="Cerrar tutorial"
             >
-              Cerrar
+              <div className="icon-orb"><CloseIcon className="w-5 h-5"/></div> <span>Cerrar</span>
             </button>
             <button 
               onClick={isLastStep ? onClose : handleNext} 
-              className="px-6 py-3 rounded-xl btn-primary text-white font-semibold flex items-center justify-center gap-2"
+              className="btn-pill-base btn-main-action"
               aria-label={isLastStep ? "Finalizar tutorial" : "Siguiente paso del tutorial"}
             >
-              {isLastStep ? '¡Que el Diseño Comience!' : 'Siguiente'}
-              {!isLastStep && <ChevronRightIcon className="w-5 h-5"/>}
+              <div className="icon-orb">{isLastStep ? <SparklesIcon className="w-5 h-5"/> : <ChevronRightIcon className="w-5 h-5"/>}</div>
+              <span>{isLastStep ? '¡Que el Diseño Comience!' : 'Siguiente'}</span>
             </button>
         </div>
       </div>

@@ -11,35 +11,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        /* Colores Base */
+        /* Colores Base - Restaurados */
         --color-white: #fff;
-        --color-dark-purple: #4C1D6E; /* Dark purple for general text */
-        --color-soft-purple: #8E6E9E; /* Softer purple for secondary text */
-        --color-primary-pink: #F43F94; /* Vivid Pink */
-        --color-secondary-purple: #9D55FF; /* Vivid Purple */
-        --color-light-bg: #F9ECFE; /* Lighter background tint */
-        --color-light-gray: #f8f8f8;
-        --color-medium-gray: #e0e0e0;
-        --color-dark-gray: #6b7280;
+        --color-dark-purple: #4C1D6E; /* Restaurado */
+        --color-soft-purple: #8E6E9E; /* Restaurado */
+        --color-primary-pink: #F43F94; /* Restaurado */
+        --color-secondary-purple: #9D55FF; /* Restaurado */
+        --color-light-bg: #F9ECFE; /* Restaurado */
+        --color-light-gray: #F4F7F9;
+        --color-medium-gray: #E2E8F0;
+        --color-dark-gray: #64748B;
 
-        /* Degradados */
+        /* Degradados - Restaurados */
         --gradient-header: linear-gradient(90deg, var(--color-primary-pink) 0%, var(--color-secondary-purple) 100%);
-        --gradient-button: linear-gradient(90deg, var(--color-primary-pink) 0%, var(--color-secondary-purple) 100%);
+        --gradient-button: linear-gradient(90deg, #F472B6 0%, #C084FC 100%); /* Restaurado */
+        --gradient-danger: linear-gradient(90deg, #EF4444 0%, #F87171 100%); /* Nuevo degradado para peligro */
+
 
         /* Fuentes */
         --font-title: 'Nunito', sans-serif;
         --font-body: 'Inter', sans-serif;
 
-        /* Sombras */
-        --shadow-primary: 0 4px 15px -3px rgba(244, 63, 148, 0.4); /* Pinkish shadow for primary buttons */
-        --shadow-card: 0 8px 32px 0 rgba(142, 110, 158, 0.1); /* Lighter shadow for white card */
-        --shadow-card-hover: 0 10px 40px 0 rgba(142, 110, 158, 0.15); /* Slightly larger shadow on hover */
+        /* Sombras - Restauradas y Refinadas */
+        --shadow-primary: 0 8px 25px -5px rgba(244, 63, 148, 0.6); /* Restaurado */
+        --shadow-card: 0 10px 40px 0 rgba(142, 110, 158, 0.2); /* Restaurado */
+        --shadow-card-hover: 0 15px 50px 0 rgba(142, 110, 158, 0.3); /* Restaurado, pero con la estética de hover refinada */
       }
 
       body {
         font-family: var(--font-body);
         background-color: var(--color-white);
-        background-image: radial-gradient(circle at 50% 0, var(--color-light-bg) 0%, rgba(255, 255, 255, 0) 50%);
+        background-image: radial-gradient(circle at 50% 0, var(--color-light-bg) 0%, rgba(255, 255, 255, 0) 60%); /* Gradiente más amplio */
         color: var(--color-dark-purple);
         transition: background-color 0.3s ease, color 0.3s ease;
       }
@@ -74,18 +76,205 @@
       .text-primary-accent { color: var(--color-primary-pink); }
       .text-secondary-accent { color: var(--color-secondary-purple); }
 
-      /* Button Primary - shared style */
-      .btn-primary {
-          @apply rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300;
-          background-image: var(--gradient-button);
-          color: var(--color-white);
-          box-shadow: var(--shadow-primary);
+      /* --- NEW BUTTON STYLES (Based on Reference Image) --- */
+
+      /* Base for all pill-shaped buttons with text */
+      .btn-pill-base {
+          @apply relative flex items-center rounded-full font-semibold transition-all duration-300 overflow-hidden;
+          color: var(--color-white); /* Default text color for gradient pills */
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* Soft general shadow */
+          min-height: 48px; /* Consistent height */
+          padding: 0 20px 0 20px; /* Base padding, will be adjusted by text span */
+          text-align: left;
       }
-      .btn-primary:disabled {
+      .btn-pill-base:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      }
+      .btn-pill-base:active {
+          transform: translateY(0);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }
+      .btn-pill-base:disabled {
           opacity: 0.6;
           cursor: not-allowed;
-          box-shadow: none;
           transform: none;
+          box-shadow: none;
+      }
+
+      /* Orb for icons in pill buttons (white embossed circle) */
+      .icon-orb {
+          @apply absolute flex items-center justify-center rounded-full;
+          background-color: var(--color-white);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 3px rgba(255,255,255,0.8), inset 0 -1px 3px rgba(0,0,0,0.1); /* Embossed effect */
+          left: 4px; /* Position inside the pill */
+          transition: transform 0.2s ease-out;
+      }
+      .icon-orb > svg {
+          fill: currentColor; /* Will inherit/be set by specific button variant */
+      }
+      .btn-pill-base span:not(.icon-orb) { /* Text label positioning */
+          padding-left: 40px; /* Offset for the orb */
+          position: relative;
+          z-index: 1; /* Ensure text is above orb if needed */
+      }
+      
+
+      /* 1. Main Action Button (Gradient, Large, Icon Orb) */
+      .btn-main-action {
+          @apply text-lg py-3 pr-6;
+          background-image: var(--gradient-button);
+      }
+      .btn-main-action .icon-orb {
+          width: 40px;
+          height: 40px;
+      }
+      .btn-main-action .icon-orb > svg {
+          color: var(--color-secondary-purple); /* Icon color */
+          width: 24px;
+          height: 24px;
+      }
+
+      /* 1.1. Main Action Button with Danger Gradient */
+      .btn-main-action-danger {
+          @apply text-lg py-3 pr-6;
+          background-image: var(--gradient-danger);
+      }
+      .btn-main-action-danger .icon-orb {
+          width: 40px;
+          height: 40px;
+      }
+      .btn-main-action-danger .icon-orb > svg {
+          color: var(--color-white); /* White icon on red gradient */
+          width: 24px;
+          height: 24px;
+      }
+
+
+      /* 2. Secondary Action Button (White, Bordered, Icon Orb) */
+      .btn-secondary-action {
+          @apply text-base py-2.5 px-5;
+          background-color: var(--color-white);
+          color: var(--color-primary-pink);
+          border: 2px solid var(--color-primary-pink);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      .btn-secondary-action:hover {
+          background-color: rgba(244, 63, 148, 0.1); /* light pink hover */
+      }
+      .btn-secondary-action .icon-orb {
+          width: 36px;
+          height: 36px;
+      }
+      .btn-secondary-action .icon-orb > svg {
+          color: var(--color-primary-pink);
+          width: 20px;
+          height: 20px;
+      }
+      .btn-secondary-action span:not(.icon-orb) { /* Text label */
+          color: var(--color-primary-pink); /* Ensure text color */
+          padding-left: 36px; /* Offset for smaller orb */
+      }
+
+      /* 3. Navigation Link Button (Header/Mobile Menu) */
+      .btn-nav-link {
+          @apply text-sm py-2 px-4;
+          background: transparent; /* Default transparent */
+          color: var(--color-white);
+          box-shadow: none;
+          min-height: 40px;
+          padding-left: 10px; /* Adjust padding for smaller orb */
+      }
+      .btn-nav-link .icon-orb {
+          left: 4px;
+          width: 32px;
+          height: 32px;
+      }
+      .btn-nav-link .icon-orb > svg {
+          color: var(--color-white);
+          width: 18px;
+          height: 18px;
+      }
+      .btn-nav-link span:not(.icon-orb) { /* Text label */
+          padding-left: 32px; /* Offset for orb */
+      }
+      .btn-nav-link:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+          transform: translateY(-2px);
+          box-shadow: none;
+      }
+      .btn-nav-link.is-active {
+          background-color: var(--color-white);
+          color: var(--color-primary-pink);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          transform: translateY(-2px);
+      }
+      .btn-nav-link.is-active .icon-orb > svg {
+          color: var(--color-primary-pink);
+      }
+
+
+      /* 4. Solid Icon Buttons (Small, Icon-Only, No Orb) */
+      .btn-solid-icon {
+          @apply w-12 h-12 flex items-center justify-center rounded-full p-0 shadow-md transition-all transform;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      }
+      .btn-solid-icon:hover {
+          transform: scale(1.05);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      }
+      .btn-solid-icon:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+      }
+      .btn-solid-icon > svg {
+          fill: currentColor;
+          color: var(--color-white); /* Default icon color on solid background */
+          width: 24px;
+          height: 24px;
+      }
+
+      .btn-solid-icon-purple {
+          background-color: var(--color-secondary-purple);
+      }
+      .btn-solid-icon-pink {
+          background-color: var(--color-primary-pink);
+      }
+      .btn-solid-icon-red {
+          background-color: #EF4444; /* Tailwind red-500 equivalent */
+      }
+      .btn-solid-icon-green { /* For CheckIcon success */
+          background-color: #22C55E; /* Tailwind green-500 equivalent */
+      }
+
+
+      /* 5. Circular Embossed Icon Button (for VoiceInputButton) */
+      .btn-circular-embossed {
+          @apply flex items-center justify-center rounded-full transition-all duration-300;
+          background-color: var(--color-white);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15), inset 0 1px 3px rgba(255,255,255,0.8), inset 0 -1px 3px rgba(0,0,0,0.1); /* Embossed effect */
+          width: 40px; /* Default size */
+          height: 40px; /* Default size */
+      }
+      .btn-circular-embossed:hover {
+          transform: translateY(-1px) scale(1.05);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 3px rgba(255,255,255,0.8), inset 0 -1px 3px rgba(0,0,0,0.1);
+      }
+      .btn-circular-embossed > svg {
+          fill: currentColor;
+          color: var(--color-secondary-purple); /* Default icon color */
+          width: 24px;
+          height: 24px;
+      }
+      .btn-circular-embossed.active-listening {
+          background-image: var(--gradient-button); /* Gradient when listening */
+          box-shadow: var(--shadow-primary);
+          animation: pulse-bright 2s infinite;
+      }
+      .btn-circular-embossed.active-listening > svg {
+          color: var(--color-white); /* White icon when listening */
       }
 
       /* Header background */
@@ -93,37 +282,16 @@
         background: var(--gradient-header);
       }
 
-      /* Navigation Pills */
-      .nav-pill-button {
-          @apply relative flex items-center gap-2 rounded-full font-semibold text-sm transition-all duration-300;
-          color: var(--color-white);
-          background-color: transparent;
-      }
-      .nav-pill-button:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-      }
-      .nav-pill-button.is-active {
-          background-color: var(--color-white);
-          color: var(--color-primary-pink);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      }
-      .nav-pill-button.is-active svg {
-          fill: var(--color-primary-pink);
-      }
-      .nav-pill-button svg {
-          fill: var(--color-white);
-          transition: fill 0.3s ease;
-      }
-      .nav-pill-button.is-active:hover { /* Override hover for active state */
-        background-color: var(--color-white);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      }
-
+      /* Navigation Pills (OLD - now replaced by btn-nav-link) */
+      /* .nav-pill-button {} */ /* Removed */
+      
       /* Image Comparator Styles */
       .image-comparator {
         position: relative;
         display: flex;
         overflow: hidden;
+        /* Añadir sombra suave para el comparador */
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
       }
 
       .image-comparator img {
@@ -150,12 +318,12 @@
         position: absolute;
         top: 0;
         bottom: 0;
-        width: 4px; /* Thickness of the slider line */
+        width: 6px; /* Más grueso */
         background-color: var(--color-white);
         cursor: ew-resize;
         z-index: 10;
         transform: translateX(-50%);
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        box-shadow: 0 0 15px rgba(0,0,0,0.4); /* Sombra más suave y extendida */
       }
 
       .image-comparator .slider-handle {
@@ -163,29 +331,27 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 32px;
-        height: 32px;
+        width: 40px; /* Más grande */
+        height: 40px; /* Más grande */
         background-color: var(--color-white);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        box-shadow: 0 0 12px rgba(0,0,0,0.3);
+        transition: transform 0.2s ease-out;
       }
-      .image-comparator .slider-handle::before,
+      .image-comparator .slider-handle:hover {
+          transform: translate(-50%, -50%) scale(1.1); /* Efecto hover juguetón */
+      }
+      .image-comparator .slider-handle svg { /* Icono del slider */
+          fill: var(--color-primary-pink);
+          width: 24px;
+          height: 24px;
+      }
+      .image-comparator .slider-handle::before, /* Se eliminan los palitos */
       .image-comparator .slider-handle::after {
-        content: '';
-        position: absolute;
-        width: 2px;
-        height: 12px;
-        background-color: var(--color-primary-pink);
-        border-radius: 1px;
-      }
-      .image-comparator .slider-handle::before {
-        transform: translate(-4px, 0);
-      }
-      .image-comparator .slider-handle::after {
-        transform: translate(4px, 0);
+        content: none;
       }
       
       /* Scrollbar Hide Utility */
@@ -206,6 +372,14 @@
         animation: fade-in 0.5s ease-out forwards;
       }
 
+      @keyframes pop-in {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-pop-in {
+        animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
       @keyframes fade-in-out {
         0% { opacity: 0; }
         10% { opacity: 1; }
@@ -222,6 +396,19 @@
       }
       .animate-scale-in {
         animation: scale-in 0.3s ease-out forwards;
+      }
+      
+      @keyframes pulse-bright {
+        0%, 100% {
+          box-shadow: 0 0 10px 2px rgba(244, 63, 148, 0.4), 0 0 0 0 rgba(244, 63, 148, 0.4); /* Restaurado a color original */
+        }
+        50% {
+          box-shadow: 0 0 20px 6px rgba(244, 63, 148, 0.8), 0 0 0 15px rgba(244, 63, 148, 0); /* Restaurado a color original */
+        }
+      }
+
+      .voice-input-listening {
+        animation: pulse-bright 2s infinite;
       }
 
       @keyframes kiss-fly {
@@ -271,6 +458,7 @@
         background-color: #fcebeb; /* Lighter red for error background */
         border-color: #ef9a9a; /* Softer red border */
         color: #c62828; /* Darker red text */
+        box-shadow: 0 4px 10px rgba(244, 63, 148, 0.2); /* Sombra suave para error - Restaurado a color original */
       }
       .error-message-card button {
         color: #c62828;
@@ -284,7 +472,7 @@
         background-color: var(--color-white); /* White background */
         border-color: var(--color-medium-gray); /* Light border */
         color: var(--color-dark-purple); /* Darker text */
-        box-shadow: 0 4px 15px -3px rgba(142, 110, 158, 0.3); /* Lighter shadow */
+        box-shadow: 0 6px 20px -3px rgba(142, 110, 158, 0.4); /* Sombra más pronunciada - Restaurado a color original */
       }
       .motivation-message-card button {
         color: var(--color-soft-purple);
@@ -302,6 +490,42 @@
         background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
         background-size: 1000px 100%;
         animation: shimmer 1.5s infinite linear;
+      }
+
+      /* Loader Overlay Specifics */
+      .loader-overlay-background {
+        background-image: url("https://images.unsplash.com/photo-1517705008103-b6814407886a?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"); /* Imagen de fondo soñadora */
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        overflow: hidden;
+      }
+      .loader-overlay-background::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-color: rgba(255, 255, 255, 0.8); /* Fondo blanco semitransparente */
+          backdrop-filter: blur(5px);
+          z-index: 1;
+      }
+      .loader-content {
+          position: relative;
+          z-index: 2;
+      }
+      
+      /* Sparkle animation for icons/elements */
+      @keyframes sparkle-glow {
+        0%, 100% { text-shadow: 0 0 5px var(--color-primary-pink), 0 0 10px var(--color-secondary-purple); }
+        50% { text-shadow: 0 0 10px var(--color-primary-pink), 0 0 20px var(--color-secondary-purple); }
+      }
+      .animate-sparkle-glow {
+          animation: sparkle-glow 2s infinite alternate ease-in-out;
+      }
+
+      /* Small pop animation on hover */
+      .hover-pop:hover {
+        transform: scale(1.03);
+        transition: transform 0.2s ease-out;
       }
 
     </style>

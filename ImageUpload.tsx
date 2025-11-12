@@ -122,21 +122,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
     <div className="max-w-4xl mx-auto flex flex-col items-center gap-8 animate-fade-in">
         <div className="text-center p-4 rounded-3xl w-full">
              <div className="flex items-center justify-center gap-2">
-                <SparklesIcon className="w-12 h-12 title-gradient animate-sparkle-glow" />
-                <h1 className="text-6xl main-title title-gradient">
+                <SparklesIcon className="w-10 h-10 title-gradient animate-sparkle-glow" /> {/* Adjusted icon size */}
+                <h1 className="text-5xl main-title title-gradient"> {/* Reduced size for compactness */}
                   Rosi Decora
                 </h1>
               </div>
         </div>
         
-      <div className="w-full text-center mt-8">
+      <div className="w-full text-center mt-4"> {/* Reduced margin-top */}
         <h3 className="text-3xl sm:text-4xl main-title title-gradient mt-2">Elige el Rincón que tu Corazón Anhela Transformar</h3>
         <p className="text-text-color-soft mt-1">Arrastra una foto o elígela desde tu dispositivo</p>
       </div>
 
       {!preview ? (
         <form 
-          className={`w-full max-w-2xl h-auto min-h-[20rem] border-4 border-dashed rounded-3xl flex flex-col justify-center items-center text-center p-4 sm:p-8 transition-all duration-300 relative group
+          className={`w-full max-w-2xl h-80 border-4 border-dashed rounded-3xl flex flex-col justify-center items-center text-center p-4 sm:p-6 transition-all duration-300 relative group
                      ${dragActive ? 'border-primary-accent bg-pink-50 shadow-lg scale-[1.01]' : 'border-secondary-accent/50 bg-white'}`}
           onDragEnter={handleDrag} 
           onDragLeave={handleDrag}
@@ -148,18 +148,19 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                 <div className="absolute inset-0 border-4 border-primary-accent rounded-3xl animate-pulse-bright opacity-50 z-0"></div>
             )}
             <div className="relative z-10 flex flex-col items-center">
-                <p className="text-text-color-soft mb-4 text-lg">Arrastra aquí la foto de tu rincón especial</p>
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <button type="button" onClick={() => onButtonClick(fileInputRef)} className="px-8 py-3 btn-primary animate-pop-in" aria-label="Seleccionar archivo desde el sistema">
-                      Elige una Foto
+                <p className="text-text-color-soft mb-3 text-lg">Arrastra aquí la foto de tu rincón especial</p> {/* Adjusted margin-bottom */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-4"> {/* Adjusted margin-bottom */}
+                    <button type="button" onClick={() => onButtonClick(fileInputRef)} className="px-8 py-3 btn-pill-base btn-main-action animate-pop-in" aria-label="Seleccionar archivo desde el sistema">
+                        <div className="icon-orb"><SparklesIcon className="w-6 h-6"/></div> {/* Icon within orb */}
+                        <span>Elige una Foto</span>
                     </button>
-                    <button type="button" onClick={() => onButtonClick(cameraInputRef)} className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-gray-200 text-text-color font-semibold shadow-md hover:scale-105 transition-transform animate-pop-in" aria-label="Usar la cámara para tomar una foto">
-                      <CameraIcon className="w-6 h-6"/>
-                      Usa la Cámara
+                    <button type="button" onClick={() => onButtonClick(cameraInputRef)} className="btn-pill-base btn-secondary-action animate-pop-in" aria-label="Usar la cámara para tomar una foto"> {/* Using btn-secondary-action */}
+                        <div className="icon-orb"><CameraIcon className="w-6 h-6"/></div> {/* Icon within orb */}
+                        <span>Usa la Cámara</span>
                     </button>
                 </div>
                 {uploadError && (
-                    <p className="text-red-500 text-sm mt-4 animate-pop-in">{uploadError}</p>
+                    <p className="text-red-500 text-sm mt-2 animate-pop-in">{uploadError}</p> {/* Adjusted margin-top */}
                 )}
             </div>
         </form>
@@ -177,14 +178,15 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-          <button onClick={handleSubmit} className="mt-6 w-full py-4 text-lg btn-primary animate-pop-in" aria-label="Generar diseños mágicos para la imagen subida">
-            Que la Magia Comience
+          <button onClick={handleSubmit} className="mt-6 w-full py-4 btn-pill-base btn-main-action animate-pop-in" aria-label="Generar diseños mágicos para la imagen subida">
+            <div className="icon-orb"><MagicWandIcon className="w-6 h-6"/></div> {/* Icon within orb */}
+            <span>Que la Magia Comience</span>
           </button>
         </div>
       )}
 
       {recentProjects.length > 0 && (
-          <div className="w-full mt-16 animate-fade-in">
+          <div className="w-full mt-12 animate-fade-in"> {/* Reduced margin-top */}
               <h3 className="text-3xl sm:text-4xl main-title title-gradient text-center mb-6">Tus Proyectos Recientes</h3>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {recentProjects.map(project => (
@@ -214,7 +216,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageUpload, recentProjects
       )}
 
       {inspirationStyleImages.length > 0 && ( // Conditionally render only if there are actual images
-          <div className="w-full mt-16 animate-fade-in">
+          <div className="w-full mt-12 animate-fade-in"> {/* Reduced margin-top */}
               <h3 className="text-3xl sm:text-4xl main-title title-gradient text-center mb-6">Empieza con Inspiración</h3>
               <p className="text-text-color-soft text-center mb-8">
                   ¿No tienes una foto a mano? Elige una de estas inspiraciones para que la magia comience y cree un nuevo proyecto para ti.

@@ -7,12 +7,11 @@ import { ChevronLeftIcon, CommentIcon as DiaryIcon } from './icons/Icons';
 interface DiaryViewProps {
     project: Project;
     onNavigateBack: () => void;
-    onSaveComment: (projectId: string, styleName: string, text: string) => void; // Recibe la función de App.tsx
+    onSaveComment: (projectId: string, styleName: string, text: string) => void;
 }
 
 const DiaryView: React.FC<DiaryViewProps> = ({ project, onNavigateBack, onSaveComment }) => {
-    // Hardcoded quotes for DiaryView, similar to ProjectView for consistency
-    const yersonQuote = "Cada espacio es una historia esperando ser contada, ¿cuál narrarás hoy?";
+    const yersonQuote = "Para Rosi, con todo mi cariño, he creado esta app para que puedas pintar la realidad con los colores de tu imaginación. - Yerson";
     const yersonQuoteTimestamp = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     const designHoroscope = "Hoy, la energía celestial alinea tus visiones con la funcionalidad. Un toque audaz en tu rincón especial desbloqueará un flujo de creatividad inesperado. ¡Confía en tus instintos!";
 
@@ -20,7 +19,9 @@ const DiaryView: React.FC<DiaryViewProps> = ({ project, onNavigateBack, onSaveCo
         return (
             <div className="text-center py-20 text-text-color-soft">
                 <p>No se encontró el proyecto para mostrar el diario.</p>
-                <button onClick={onNavigateBack} className="mt-4 px-6 py-2 btn-primary rounded-xl">Volver</button>
+                <button onClick={onNavigateBack} className="mt-4 px-6 py-2 btn-pill-base btn-main-action rounded-xl">
+                    <div className="icon-orb"><ChevronLeftIcon className="w-6 h-6"/></div> <span>Volver</span>
+                </button>
             </div>
         );
     }
@@ -28,7 +29,7 @@ const DiaryView: React.FC<DiaryViewProps> = ({ project, onNavigateBack, onSaveCo
     return (
         <div className="container mx-auto p-4">
             <div className="flex items-center gap-4 mb-8">
-                <button onClick={onNavigateBack} className="p-2 rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors" aria-label="Volver al proyecto">
+                <button onClick={onNavigateBack} className="btn-solid-icon btn-solid-icon-purple" aria-label="Volver al proyecto"> {/* Using btn-solid-icon-purple */}
                     <ChevronLeftIcon className="w-6 h-6" />
                 </button>
                 <h2 className="text-4xl sm:text-5xl main-title font-bold title-gradient">Diario de {project.name}</h2>
@@ -43,7 +44,7 @@ const DiaryView: React.FC<DiaryViewProps> = ({ project, onNavigateBack, onSaveCo
                         <div key={variation.style_name} className="gradient-card p-6 rounded-3xl animate-fade-in">
                             <h3 className="text-3xl main-title title-gradient mb-4 text-center">{variation.style_name}</h3>
                             <ImageWithFallback
-                                src={variation.imageUrl} // variation.imageUrl can be string | null
+                                src={variation.imageUrl}
                                 alt={`Diseño ${variation.style_name} del proyecto ${project.name}`}
                                 className="w-full h-64 object-cover rounded-2xl mb-6 shadow-md"
                                 fallbackIconClassName="w-1/3 h-1/3"
@@ -52,7 +53,7 @@ const DiaryView: React.FC<DiaryViewProps> = ({ project, onNavigateBack, onSaveCo
                             <p className="text-text-color-soft text-center italic mb-8">{variation.description}</p>
                             <CommentsSection
                                 comments={variation.comments}
-                                onSaveComment={(text) => onSaveComment(project.id, variation.style_name, text)} // Llama a la prop
+                                onSaveComment={(text) => onSaveComment(project.id, variation.style_name, text)}
                             />
                         </div>
                     ))

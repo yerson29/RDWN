@@ -7,11 +7,11 @@ interface MobileMenuProps {
     onClose: () => void;
     onNavigate: (view: AppView, projectId?: string | null, initialStyleName?: string, initialTabLabel?: string) => void;
     currentView: AppView;
-    onTutorialClick: () => void; // Renamed from onRosiClick
+    onTutorialClick: () => void;
     onThrowKiss: () => void;
     onNavigateToLatestProject: () => void;
     onDiaryClick: () => void;
-    onOpenChatbot: () => void; // New prop for opening the chatbot
+    onOpenChatbot: () => void;
 }
 
 const MobileNavButton: React.FC<{ icon: React.ReactNode, onClick: () => void, ariaLabel: string, label: string, isActive?: boolean }> = ({ icon, onClick, ariaLabel, label, isActive = false }) => (
@@ -29,8 +29,8 @@ const MobileNavButton: React.FC<{ icon: React.ReactNode, onClick: () => void, ar
 );
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, currentView, onTutorialClick, onThrowKiss, onNavigateToLatestProject, onDiaryClick, onOpenChatbot }) => {
-    const handleNavigateAndClose = (view: AppView, projectId?: string | null, initialStyleName?: string, initialTabLabel?: string) => {
-        onNavigate(view, projectId, initialStyleName, initialTabLabel);
+    const handleNavigateAndClose = (view: AppView) => {
+        onNavigate(view);
         onClose();
     };
 
@@ -44,14 +44,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, cu
         onClose();
     };
 
-    const handleTutorialClickAndClose = () => { // Renamed
-        onTutorialClick(); // Renamed
+    const handleTutorialClickAndClose = () => {
+        onTutorialClick();
         onClose();
     }
 
     const handleThrowKissAndClose = () => {
         onThrowKiss();
-        onClose(); // Close menu even if kiss animation happens
+        onClose();
     }
 
     const handleOpenChatbotAndClose = () => {
@@ -62,11 +62,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, cu
     return (
         <div 
             className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${isOpen ? 'visible bg-black/40' : 'invisible'}`}
-            onClick={onClose} // Close menu when clicking outside
+            onClick={onClose}
         >
             <div 
                 className={`fixed left-0 top-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-                onClick={e => e.stopPropagation()} // Prevent closing when clicking inside menu
+                onClick={e => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Menú de navegación principal"
@@ -78,10 +78,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onNavigate, cu
                     </div>
                     <button 
                         onClick={onClose} 
-                        className="p-2 text-text-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary-accent"
+                        className="btn-solid-icon btn-solid-icon-red w-8 h-8 p-0" /* Using btn-solid-icon-red */
                         aria-label="Cerrar menú"
                     >
-                        <CloseIcon className="w-7 h-7" />
+                        <CloseIcon className="w-5 h-5" />
                     </button>
                 </div>
                 <nav className="flex flex-col gap-2 p-4" aria-label="Navegación principal">

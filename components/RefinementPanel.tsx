@@ -1,261 +1,216 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StyleVariation, Iteration, ImageBase64 } from '../types';
+import { StyleVariation, Iteration, ImageBase64, Project } from '../types';
 import ImageWithFallback from './ImageWithFallback';
-import { RevertIcon, ChevronLeftIcon, ChevronRightIcon, SparklesIcon } from './icons/Icons';
-import { ImageComparator } from './UtilityComponents'; // Importar ImageComparator
-import RefineTutorial from './RefineTutorial'; // Importar el tutorial de refinamiento
+// Se añade CloseIcon a la importación
+import { RevertIcon, ChevronLeftIcon, ChevronRightIcon, SparklesIcon, MagicWandIcon, CloseIcon } from './icons/Icons';
+import { ImageComparator } from './UtilityComponents'; 
+import RefineTutorial from './RefineTutorial'; 
+import VoiceInputButton from './VoiceInputButton';
 
 interface RefinementPanelProps {
-  projectId: string; // Nuevo: ID del proyecto
+  project: Project; 
   styleVariation: StyleVariation;
-  onGenerateRefinement: (base64Data: string, mimeType: string, prompt: string, styleName: string) => Promise<{ newImage: ImageBase64; newDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> }>; // Para generar preview
-  onCommitRefinement: (projectId: string, styleName: string, prompt: string, generatedImage: ImageBase64, generatedDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'>, currentIterationIndex: number) => void; // Para aplicar refinamiento
-  // onRevert eliminado
+  onGenerateRefinement: (base64Data: string, mimeType: string, prompt: string, styleName: string, projectAnalysis: string) => Promise<{ newImage: ImageBase64; newDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> }>; 
+  onCommitRefinement: (projectId: string, styleName: string, prompt: string, generatedImage: ImageBase64, generatedDetails: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'>, currentIterationIndex: number) => void; 
   currentIterationIndex: number;
   onSelectIteration: (index: number) => void;
-  showRefineTutorial: boolean; // Prop para controlar el tutorial
-  setShowRefineTutorial: React.Dispatch<React.SetStateAction<boolean>>; // Setter para el tutorial
+  showRefineTutorial: boolean; 
+  setShowRefineTutorial: React.Dispatch<React.SetStateAction<boolean>>; 
 }
 
-const RefinementPanel: React.FC<RefinementPanelProps> = ({ 
-  projectId,
+export const RefinementPanel: React.FC<RefinementPanelProps> = ({ 
+  project,
   styleVariation, 
   onGenerateRefinement, 
   onCommitRefinement, 
   currentIterationIndex, 
   onSelectIteration,
-  showRefineTutorial,
-  setShowRefineTutorial,
+  showRefineTutorial, 
+  setShowRefineTutorial, 
 }) => {
-  const [prompt, setPrompt] = useState('');
-  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
-  const [previewRefinement, setPreviewRefinement] = useState<{ image: ImageBase64; details: Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> } | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [refinementPrompt, setRefinementPrompt] = useState('');
+  const [isGeneratingRefinement, setIsGeneratingRefinement] = useState(false);
+  const [previewImageBase64, setPreviewImageBase64] = useState<ImageBase64 | null>(null);
+  const [previewDetails, setPreviewDetails] = useState<Pick<StyleVariation, 'description' | 'color_palette' | 'furniture_recommendations'> | null>(null);
+  const [refinementError, setRefinementError] = useState<string | null>(null);
 
-  // Efecto para mostrar el tutorial la primera vez que se accede al panel
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
-    const hasSeenRefineTutorial = localStorage.getItem('rosi-decora-refine-tutorial-seen');
-    if (!hasSeenRefineTutorial) {
-        setShowRefineTutorial(true);
-        // localStorage.setItem('rosi-decora-refine-tutorial-seen', 'true'); // Set once user closes it
+    if (isFirstRender.current) {
+        const hasSeenRefineTutorial = localStorage.getItem('universo-suenos-refine-tutorial-seen');
+        if (!hasSeenRefineTutorial) {
+            setShowRefineTutorial(true);
+            localStorage.setItem('universo-suenos-refine-tutorial-seen', 'true');
+        }
+        isFirstRender.current = false;
     }
   }, [setShowRefineTutorial]);
 
-  // Restablecer el estado de vista previa cuando el estilo seleccionado cambia
-  useEffect(() => {
-    setPrompt('');
-    setIsGeneratingPreview(false);
-    setPreviewRefinement(null);
-  }, [styleVariation]);
+  const allContent = useMemo(() => [styleVariation, ...styleVariation.iterations], [styleVariation]);
+  const currentContent = allContent[currentIterationIndex];
+  const latestBase64Image = currentContent?.imageBase64;
+  const latestImageUrl = currentContent?.imageUrl;
 
-  // Se construye el array de imágenes para el historial, incluyendo la imagen base del estilo como la "iteración 0"
-  const allImages = useMemo(() => {
-    return [
-      { 
-          imageUrl: styleVariation.imageUrl, 
-          prompt: "Diseño Inicial", 
-          type: 'initial', 
-          imageBase64: styleVariation.imageBase64 
-      },
-      ...styleVariation.iterations.map(iter => ({ 
-          imageUrl: iter.imageUrl, 
-          prompt: iter.prompt, 
-          type: 'iteration', 
-          imageBase64: iter.imageBase64 
-      }))
-    ];
-  }, [styleVariation]);
+  const canGoBack = currentIterationIndex > 0;
+  const canGoForward = currentIterationIndex < styleVariation.iterations.length;
 
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = scrollRef.current.offsetWidth / 2; // Scroll half the visible width
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      });
-    }
+  const handleGoBack = () => {
+    if (canGoBack) onSelectIteration(currentIterationIndex - 1);
   };
 
-  const handleGeneratePreview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim() || isGeneratingPreview) return;
+  const handleGoForward = () => {
+    if (canGoForward) onSelectIteration(currentIterationIndex + 1);
+  };
 
-    // La imagen a refinar es la que se muestra actualmente en la línea de tiempo.
-    // Si currentIterationIndex es 0, es la imagen base del estilo.
-    // Si es > 0, es la imagen de la iteración correspondiente.
-    const currentImageToRefineBase64 = allImages[currentIterationIndex]?.imageBase64;
-      
-    if (!currentImageToRefineBase64?.data) { // Ensure data exists
-      throw new Error("No se pudo obtener la imagen base para el refinamiento.");
+  const handleGeneratePreview = useCallback(async () => {
+    if (!refinementPrompt.trim() || !latestBase64Image?.data) {
+      setRefinementError("Por favor, escribe tus ideas antes de generar la vista previa.");
+      return;
     }
-
-    setIsGeneratingPreview(true);
-    setPreviewRefinement(null); // Limpiar cualquier preview anterior
-
+    setIsGeneratingRefinement(true);
+    setRefinementError(null);
     try {
-      const result = await onGenerateRefinement(currentImageToRefineBase64.data, currentImageToRefineBase64.mimeType, prompt, styleVariation.style_name);
-      setPreviewRefinement(result); // Guardar la imagen y detalles de la vista previa
-    } catch (error) {
-      console.error("Error generando vista previa:", error);
-      // El error se maneja globalmente en App.tsx, aquí solo reseteamos el estado
-      // y permitimos que App.tsx muestre el errorMessage
+      const result = await onGenerateRefinement(
+        latestBase64Image.data,
+        latestBase64Image.mimeType,
+        refinementPrompt,
+        styleVariation.style_name,
+        project.analysis
+      );
+      setPreviewImageBase64(result.newImage);
+      setPreviewDetails(result.newDetails);
+    } catch (error: any) {
+      setRefinementError(error.message || "Un hechizo inesperado ha interrumpido la vista previa. Intenta de nuevo.");
+      setPreviewImageBase64(null);
+      setPreviewDetails(null);
     } finally {
-      setIsGeneratingPreview(false);
+      setIsGeneratingRefinement(false);
     }
-  };
+  }, [refinementPrompt, latestBase64Image, onGenerateRefinement, styleVariation.style_name, project.analysis]);
 
   const handleApplyRefinement = () => {
-    if (!previewRefinement || !prompt.trim()) return;
-
-    // Llamar a la función de App.tsx para aplicar el refinamiento
-    onCommitRefinement(
-      projectId,
-      styleVariation.style_name,
-      prompt,
-      previewRefinement.image,
-      previewRefinement.details,
-      currentIterationIndex // Pasamos el índice actual para truncar el historial si es necesario
-    );
-
-    setPreviewRefinement(null); // Limpiar la vista previa
-    setPrompt(''); // Limpiar el prompt
-    // El currentIterationIndex se actualizará automáticamente en ProjectView debido al cambio en allProjects
-  };
-
-  const handleCancelPreview = () => {
-    setPreviewRefinement(null);
-    setIsGeneratingPreview(false);
-    setPrompt('');
-  };
-
-  const handleUndo = useCallback(() => {
-    if (currentIterationIndex > 0) {
-      onSelectIteration(currentIterationIndex - 1);
-      setPreviewRefinement(null); // Limpiar cualquier vista previa al deshacer
+    if (previewImageBase64 && previewDetails) {
+      onCommitRefinement(
+        project.id, styleVariation.style_name, refinementPrompt,
+        previewImageBase64, previewDetails, currentIterationIndex
+      );
+      setRefinementPrompt('');
+      setPreviewImageBase64(null);
+      setPreviewDetails(null);
     }
-  }, [currentIterationIndex, onSelectIteration]);
-
-  const handleRedo = useCallback(() => {
-    if (currentIterationIndex < allImages.length - 1) {
-      onSelectIteration(currentIterationIndex + 1);
-      setPreviewRefinement(null); // Limpiar cualquier vista previa al rehacer
-    }
-  }, [currentIterationIndex, onSelectIteration, allImages.length]);
+  };
   
+  const handleCancelRefinement = () => {
+    setRefinementPrompt('');
+    setPreviewImageBase64(null);
+    setPreviewDetails(null);
+    setRefinementError(null);
+  };
+  
+  useEffect(() => {
+    handleCancelRefinement();
+  }, [styleVariation, currentIterationIndex]);
+
   return (
     <div className="flex flex-col h-full">
-      {showRefineTutorial && <RefineTutorial onClose={() => setShowRefineTutorial(false)} />}
-      <h4 className="text-3xl main-title mb-4 title-gradient text-center">Tu Visión: Susúrrale tus Ideas...</h4> {/* Centered title */}
-      
-      {allImages.length > 0 && (
-          <div className="mb-4">
-              <h5 className="font-semibold text-text-color-soft mb-2">Tu Evolución:</h5>
-              <div className="relative flex items-center">
-                <button 
-                    onClick={handleUndo} 
-                    disabled={currentIterationIndex === 0 || isGeneratingPreview} // Deshabilitar si no hay historial o generando preview
-                    className="absolute -left-2 z-10 p-1 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    aria-label="Deshacer última acción"
-                >
-                    <ChevronLeftIcon className="w-5 h-5 text-gray-600"/>
-                </button>
-                <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide flex-grow" role="list" aria-label="Historial de iteraciones de diseño">
-                   {allImages.map((iter, index) => (
-                       <button
-                           key={index} 
-                           onClick={() => onSelectIteration(index)}
-                           className={`flex-shrink-0 text-center group relative p-1 rounded-lg transition-all border-2 
-                           ${currentIterationIndex === index ? 'border-primary-accent ring-2 ring-primary-accent/50 scale-105' : 'border-transparent hover:border-gray-300'}`}
-                           aria-current={currentIterationIndex === index ? 'true' : 'false'}
-                           aria-label={`Ver iteración ${index} de diseño: ${iter.prompt}`}
-                           title={iter.prompt}
-                       >
-                           <ImageWithFallback 
-                               src={iter.imageUrl} // iter.imageUrl can be string | null
-                               alt={`Iteración ${index}: ${iter.prompt}`} 
-                               className="w-16 h-16 rounded-lg object-cover shadow-md"
-                               fallbackIconClassName="w-8 h-8"
-                               loading="lazy"
-                           />
-                           <span className="absolute bottom-1 right-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded-full">#{index}</span>
-                       </button>
-                   ))}
-                </div>
-                <button 
-                    onClick={handleRedo} 
-                    disabled={currentIterationIndex === allImages.length - 1 || isGeneratingPreview} // Deshabilitar si no hay historial futuro o generando preview
-                    className="absolute -right-2 z-10 p-1 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    aria-label="Rehacer última acción deshecha"
-                >
-                    <ChevronRightIcon className="w-5 h-5 text-gray-600"/>
-                </button>
-              </div>
-          </div>
-      )}
+        {showRefineTutorial && <RefineTutorial onClose={() => setShowRefineTutorial(false)} />}
+        <h3 className="text-3xl main-title title-gradient text-center mb-4">Refina tu Sueño</h3>
 
-      {previewRefinement && allImages[currentIterationIndex]?.imageUrl ? (
-        <div className="mb-4 flex flex-col gap-4">
-            <h5 className="font-semibold text-text-color-soft text-center">Vista Previa de tu Magia:</h5>
+        <div className="relative aspect-video rounded-xl mb-6 shadow-xl">
             <ImageComparator
-                before={allImages[currentIterationIndex]?.imageUrl} // imageUrl can be string | null
-                after={previewRefinement.image.data
-                    ? `data:${previewRefinement.image.mimeType};base64,${previewRefinement.image.data}`
-                    : null}
+                before={latestImageUrl || null}
+                after={previewImageBase64?.data ? `data:${previewImageBase64.mimeType};base64,${previewImageBase64.data}` : (latestImageUrl || null)}
             />
-            <p className="text-sm text-text-color-soft text-center">{previewRefinement.details.description}</p>
-            <div className="flex gap-2">
+            {isGeneratingRefinement && (
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl z-10 animate-fade-in">
+                    <MagicWandIcon className="w-12 h-12 text-primary-accent animate-spin-slow animate-sparkle-glow mb-4" />
+                    <p className="text-primary-accent font-semibold text-lg animate-fade-in-out">Tejiendo un nuevo sueño...</p>
+                </div>
+            )}
+        </div>
+
+        {refinementError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mb-4 text-sm error-message-card animate-pop-in" role="alert">
+                {refinementError}
+            </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mb-4">
+            <button
+                onClick={handleGoBack}
+                disabled={!canGoBack || isGeneratingRefinement || !!previewImageBase64}
+                className="btn-solid-icon btn-solid-icon-purple disabled:opacity-50 disabled:cursor-not-allowed" /* Using btn-solid-icon-purple */
+                aria-label="Deshacer cambio de diseño" title="Deshacer"
+            >
+                <ChevronLeftIcon className="w-6 h-6"/>
+            </button>
+            <span className="text-sm text-text-color-soft font-semibold">
+                {`Versión ${currentIterationIndex + 1} / ${styleVariation.iterations.length + 1}`}
+            </span>
+            <button
+                onClick={handleGoForward}
+                disabled={!canGoForward || isGeneratingRefinement || !!previewImageBase64}
+                className="btn-solid-icon btn-solid-icon-purple disabled:opacity-50 disabled:cursor-not-allowed" /* Using btn-solid-icon-purple */
+                aria-label="Rehacer cambio de diseño" title="Rehacer"
+            >
+                <ChevronRightIcon className="w-6 h-6"/>
+            </button>
+        </div>
+        
+        <div className="relative w-full mb-4">
+            <textarea
+                value={refinementPrompt}
+                onChange={(e) => setRefinementPrompt(e.target.value)}
+                placeholder="¿Qué magia quieres agregar? Describe tu idea (ej. 'añade un cuadro abstracto en la pared', 'cambia el color del sofá a azul marino', 'haz la iluminación más cálida')."
+                rows={4}
+                className="w-full p-3 pr-12 border border-secondary-accent/50 rounded-lg bg-gray-50 text-text-color focus:ring-2 focus:ring-primary-accent transition shadow-sm"
+                disabled={isGeneratingRefinement || !!previewImageBase64}
+                aria-label="Describe tus ideas para refinar el diseño"
+            ></textarea>
+            <VoiceInputButton onResult={(text) => setRefinementPrompt(prev => prev + text)} />
+        </div>
+
+
+        {previewImageBase64 ? (
+            <div className="flex gap-4 mt-auto animate-pop-in">
                 <button
                     onClick={handleApplyRefinement}
-                    disabled={isGeneratingPreview}
-                    className="flex-grow py-3 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-grow btn-pill-base btn-main-action transform hover:scale-105 transition-transform"
                     aria-label="Aplicar este refinamiento al diseño"
                 >
-                    Aplicar Refinamiento
+                    <div className="icon-orb"><SparklesIcon className="w-5 h-5 animate-sparkle-glow"/></div>
+                    <span>Aplicar Refinamiento</span>
                 </button>
                 <button
-                    type="button"
-                    onClick={handleCancelPreview}
-                    className="flex-shrink-0 p-3 rounded-xl bg-gray-200 text-gray-700 font-semibold shadow-lg hover:bg-gray-300 transition-transform"
-                    aria-label="Cancelar vista previa y volver al diseño actual"
+                    onClick={handleCancelRefinement}
+                    className="btn-pill-base btn-secondary-action transform hover:scale-105 transition-transform" /* Using btn-secondary-action */
+                    aria-label="Cancelar la vista previa y volver al diseño anterior"
                 >
-                    Cancelar
+                    <div className="icon-orb"><CloseIcon className="w-5 h-5"/></div>
+                    <span>Cancelar</span>
                 </button>
             </div>
-        </div>
-      ) : (
-        <form onSubmit={handleGeneratePreview}>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Cuéntale tu visión. Ej: 'Un sofá que abrace tu espíritu' o 'Paredes con el color de tu felicidad'..."
-              className="w-full p-3 border border-secondary-accent/50 rounded-2xl mb-3 focus:ring-2 focus:ring-primary-accent focus:border-transparent transition bg-gray-50 text-text-color"
-              rows={3}
-              aria-label="Introduce tu solicitud de refinamiento de diseño"
-            ></textarea>
-            <p className="text-sm text-text-color-soft mb-4 text-center">
-                Cuéntale con detalle qué imaginas, y tu universo de sueños lo hará realidad.
-            </p>
+        ) : (
             <button
-              type="submit"
-              disabled={!prompt.trim() || isGeneratingPreview}
-              className="w-full py-3 rounded-xl btn-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              aria-label="Generar una vista previa del diseño"
+                onClick={handleGeneratePreview}
+                disabled={!refinementPrompt.trim() || isGeneratingRefinement}
+                className="w-full px-6 py-3 btn-pill-base btn-main-action disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-auto transform hover:scale-105 transition-transform"
+                aria-label="Generar vista previa del refinamiento"
             >
-              {isGeneratingPreview ? (
-                <>
-                  <SparklesIcon className="w-5 h-5 animate-spin" />
-                  Tejiendo Vista Previa...
-                </>
-              ) : (
-                <>
-                  Generar Vista Previa
-                </>
-              )}
+                {isGeneratingRefinement ? (
+                    <>
+                        <div className="icon-orb"><SparklesIcon className="w-5 h-5 animate-spin"/></div>
+                        <span>Generando Vista Previa...</span>
+                    </>
+                ) : (
+                    <>
+                        <div className="icon-orb"><SparklesIcon className="w-5 h-5 animate-sparkle-glow"/></div>
+                        <span>Generar Vista Previa</span>
+                    </>
+                )}
             </button>
-        </form>
-      )}
+        )}
     </div>
   );
 };
-
-export default RefinementPanel;

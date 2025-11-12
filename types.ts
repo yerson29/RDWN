@@ -3,7 +3,7 @@ export interface Furniture {
   description: string;
   price: string;
   link: string;
-  imageUrl?: string; // New: Optional URL for the furniture image
+  imageUrl?: string; 
 }
 
 export interface ImageBase64 {
@@ -14,7 +14,7 @@ export interface ImageBase64 {
 export interface Iteration {
     prompt: string;
     imageUrl: string | null;
-    imageBase64: ImageBase64 | null; // Can be null for archived projects
+    imageBase64: ImageBase64 | null; 
     description?: string;
     color_palette?: string[];
     furniture_recommendations?: Furniture[];
@@ -32,16 +32,16 @@ export interface StyleVariation {
   color_palette: string[];
   furniture_recommendations: Furniture[];
   imageUrl: string | null;
-  imageBase64: ImageBase64 | null; // Can be null for archived projects
+  imageBase64: ImageBase64 | null; 
   iterations: Iteration[];
-  comments: Comment[]; // Added comments to StyleVariation
+  comments: Comment[]; 
 }
 
 export interface Project {
   id: string;
   name: string;
-  originalImage: string | null; // This will now store the full data: URL for persistence
-  originalImageBase64: ImageBase64 | null; // Can be null for archived projects
+  originalImage: string | null; 
+  originalImageBase64: ImageBase64 | null; 
   analysis: string;
   styleVariations: StyleVariation[];
   createdAt: string;
@@ -67,7 +67,7 @@ export interface GroundingUrl {
 
 export interface ChatMessagePart {
   text?: string;
-  groundingUrls?: GroundingUrl[]; // Array of objects
+  groundingUrls?: GroundingUrl[]; 
 }
 
 export interface ChatMessage {

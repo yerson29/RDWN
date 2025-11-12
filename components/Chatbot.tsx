@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
-import { CloseIcon, ChatIcon, UserIcon, SparklesIcon, ExternalLinkIcon } from './icons/Icons'; // Assuming ChatIcon, UserIcon, SparklesIcon are available in Icons.tsx
-import { ChatMessage, GroundingUrl } from '../types'; // Import ChatMessage and GroundingUrl
+import { CloseIcon, ChatIcon, UserIcon, SparklesIcon, ExternalLinkIcon } from './icons/Icons';
+import { ChatMessage, GroundingUrl } from '../types';
+import VoiceInputButton from './VoiceInputButton';
 
 interface ChatbotProps {
   isOpen: boolean;
   onClose: () => void;
-  chatHistory: ChatMessage[]; // Updated type
+  chatHistory: ChatMessage[];
   onSendMessage: (message: string) => void;
   isSending: boolean;
 }
@@ -37,9 +38,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose, chatHistory, onSendM
 
   const handleSuggestionClick = (suggestion: string) => {
     setInputMessage(suggestion);
-    // Optionally send message directly if user prefers:
-    // onSendMessage(suggestion);
-    // setInputMessage('');
   };
 
   return (
@@ -52,12 +50,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose, chatHistory, onSendM
                 className={`flex flex-col gap-1 p-3 rounded-lg max-w-[80%] break-words shadow-sm ${
                   msg.role === 'user'
                     ? 'bg-primary-accent text-white rounded-br-none'
-                    : 'bg-white text-text-color rounded-bl-none border border-gray-100' // Added border for clarity
+                    : 'bg-white text-text-color rounded-bl-none border border-gray-100'
                 }`}
                 role="region"
                 aria-label={`${msg.role === 'user' ? 'Tu mensaje' : 'Mensaje del asistente'}`}
               >
-                {msg.role === 'model' && <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5 text-secondary-accent" />} {/* Changed color to secondary-accent */}
+                {msg.role === 'model' && <SparklesIcon className="w-5 h-5 flex-shrink-0 mt-0.5 text-secondary-accent" />}
                 {msg.parts.map((part, pIdx) => (
                   <React.Fragment key={pIdx}>
                     {part.text && <p className="text-sm whitespace-pre-wrap">{part.text}</p>}
@@ -95,14 +93,13 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose, chatHistory, onSendM
           <div ref={messagesEndRef} />
         </div>
 
-        {/* New: Suggestions/Whispers */}
         <div className="flex flex-wrap gap-2 mb-3 justify-center">
           {CHATBOT_SUGGESTIONS.map((suggestion, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleSuggestionClick(suggestion)}
-              className="px-4 py-2 text-sm rounded-full bg-gray-100 text-text-color-soft border border-gray-200 hover:bg-gray-200 transition-colors"
+              className="rounded-full px-4 py-2 text-sm bg-gray-100 text-text-color-soft border border-gray-200 hover:bg-gray-200 transition-colors"
               disabled={isSending}
               aria-label={`Sugerencia de chat: ${suggestion}`}
             >
@@ -112,25 +109,29 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose, chatHistory, onSendM
         </div>
 
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Pregúntale a tu asistente de diseño cualquier cosa..."
-            className="flex-grow p-3 border border-secondary-accent/50 rounded-lg bg-white text-text-color focus:ring-2 focus:ring-primary-accent transition"
-            disabled={isSending}
-            aria-label="Introduce tu mensaje para tu asistente de diseño"
-          />
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Pregúntale a tu asistente..."
+              className="w-full p-3 pr-12 border border-secondary-accent/50 rounded-lg bg-white text-text-color focus:ring-2 focus:ring-primary-accent transition"
+              disabled={isSending}
+              aria-label="Introduce tu mensaje para tu asistente de diseño"
+            />
+            <VoiceInputButton onResult={setInputMessage} />
+          </div>
           <button
             type="submit"
             disabled={!inputMessage.trim() || isSending}
-            className="p-3 rounded-lg btn-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-pill-base btn-main-action p-3 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Enviar mensaje"
           >
+            <div className="icon-orb"><ChatIcon className="w-6 h-6" /></div>
             {isSending ? (
               <SparklesIcon className="w-6 h-6 animate-spin" />
             ) : (
-              <ChatIcon className="w-6 h-6" />
+              <span>Enviar</span>
             )}
           </button>
         </form>

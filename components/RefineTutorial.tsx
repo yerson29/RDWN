@@ -80,25 +80,25 @@ const RefineTutorial: React.FC<RefineTutorialProps> = ({ onClose }) => {
             <button 
               onClick={handlePrev} 
               disabled={step === 0}
-              className="px-6 py-3 rounded-xl btn-primary text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-pill-base btn-main-action disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Paso anterior del tutorial"
             >
-              <ChevronLeftIcon className="w-5 h-5"/> Atrás
+              <div className="icon-orb"><ChevronLeftIcon className="w-5 h-5"/></div> <span>Atrás</span>
             </button>
             <button 
               onClick={onClose} 
-              className="px-6 py-3 rounded-xl bg-gray-200 text-text-color font-semibold shadow-md hover:scale-105 transition-transform"
+              className="btn-pill-base btn-secondary-action"
               aria-label="Cerrar tutorial"
             >
-              Cerrar
+              <div className="icon-orb"><CloseIcon className="w-5 h-5"/></div> <span>Cerrar</span>
             </button>
             <button 
               onClick={isLastStep ? onClose : handleNext} 
-              className="px-6 py-3 rounded-xl btn-primary text-white font-semibold flex items-center justify-center gap-2"
+              className="btn-pill-base btn-main-action"
               aria-label={isLastStep ? "Finalizar tutorial" : "Siguiente paso del tutorial"}
             >
-              {isLastStep ? '¡Empieza a Refinar!' : 'Siguiente'}
-              {!isLastStep && <ChevronRightIcon className="w-5 h-5"/>}
+              <div className="icon-orb">{isLastStep ? <SparklesIcon className="w-5 h-5"/> : <ChevronRightIcon className="w-5 h-5"/>}</div>
+              <span>{isLastStep ? '¡Empieza a Refinar!' : 'Siguiente'}</span>
             </button>
         </div>
       </div>
